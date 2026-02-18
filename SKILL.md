@@ -26,6 +26,7 @@ The art isn't aesthetic — it's **informational**. The visual identity is a dat
 | ExoskeletonRenderer | `0xE559f88f124AA2354B1570b85f6BE9536B6D60bC` | Onchain SVG art generator |
 | ExoskeletonRegistry | `0x46fd56417dcd08cA8de1E12dd6e7f7E1b791B3E9` | Name lookup, module discovery, network stats |
 | ExoskeletonWallet | `0x78aF4B6D78a116dEDB3612A30365718B076894b9` | ERC-6551 wallet activation helper |
+| ModuleMarketplace | `0x0E760171da676c219F46f289901D0be1CBD06188` | Curated module marketplace (95.80/4.20 split) |
 
 **Chain:** Base (Chain ID 8453)
 
@@ -283,6 +284,103 @@ const walletAddr = await exo.getWalletAddress(myTokenId);
 // Check if wallet is active
 const hasWallet = await exo.hasWallet(myTokenId);
 ```
+
+## Module Marketplace
+
+The Module Marketplace is a curated, standalone marketplace where builders submit modules and Exoskeleton owners activate them. Payment is split **95.80% to the builder / 4.20% to the platform** on every paid activation. Free modules are encouraged.
+
+### Contracts
+
+| Contract | Address | Purpose |
+|----------|---------|---------|
+| ModuleMarketplace | `0x0E760171da676c219F46f289901D0be1CBD06188` | Builder profiles, module registry, activation, payment splitting |
+
+### How It Works
+
+1. **Builders register** — create a profile with name and bio
+2. **Builders submit modules** — pay 0.001 ETH listing fee, module goes to pending queue
+3. **Owner approves/rejects** — curated quality control
+4. **Token owners activate** — pay module price (if premium), builder gets 95.80%, platform gets 4.20%
+5. **Marketplace modules are separate** from core module slots — complementary layer
+
+### Builder Flow
+
+```javascript
+const { Exoskeleton } = require("./exoskeleton");
+const { ethers } = require("ethers");
+const exo = new Exoskeleton();
+
+// 1. Register as a builder
+const tx1 = exo.buildRegisterBuilder("My Workshop", "I build useful modules");
+
+// 2. Submit a module (0.001 ETH listing fee included)
+const moduleName = ethers.keccak256(ethers.toUtf8Bytes("my-trading-tools"));
+const tx2 = exo.buildSubmitModule(
+  moduleName,
+  "Trading Tools",
+  "Advanced trading analysis module",
+  "1.0.0",
+  ethers.parseEther("0.05") // price per activation (0 for free)
+);
+
+// 3. Update module (builder only, anytime)
+const tx3 = exo.buildUpdateModulePrice(moduleName, ethers.parseEther("0.03"));
+const tx4 = exo.buildUpdateModuleVersion(moduleName, "1.1.0");
+
+// 4. Self-delist if needed
+const tx5 = exo.buildBuilderDelistModule(moduleName);
+```
+
+### Activation Flow
+
+```javascript
+// Check module details
+const mod = await exo.getMarketplaceModule(moduleName);
+// { builder, name, description, version, price, status, totalActivations, totalRevenue }
+
+// Activate (pay module price)
+const tx = exo.buildActivateMarketplaceModule(myTokenId, moduleName, mod.price.toString());
+
+// Check if active
+const active = await exo.isMarketplaceModuleActive(myTokenId, moduleName);
+
+// Get all active marketplace modules for a token
+const mods = await exo.getMarketplaceActiveModules(myTokenId);
+
+// Deactivate (no refund)
+const tx2 = exo.buildDeactivateMarketplaceModule(myTokenId, moduleName);
+```
+
+### Reading Marketplace Data
+
+```javascript
+// Marketplace stats
+const stats = await exo.getMarketplaceStats();
+// { totalModules, totalApproved, totalActivations, totalPlatformRevenue, pendingCount, listingFees }
+
+// Builder profile
+const builder = await exo.getMarketplaceBuilder(builderAddress);
+// { name, bio, modulesSubmitted, totalEarnings, registered }
+
+// Module count
+const count = await exo.getMarketplaceModuleCount();
+```
+
+### Payment Split
+
+| Recipient | Share | Example (0.1 ETH module) |
+|-----------|-------|--------------------------|
+| Builder | 95.80% | 0.0958 ETH |
+| Platform | 4.20% | 0.0042 ETH |
+
+### Module Status Lifecycle
+
+```
+NONE → submitModule() → PENDING → approveModule() → APPROVED → delistModule() → DELISTED → relistModule() → APPROVED
+                                → rejectModule() → REJECTED
+```
+
+Builders can self-delist their own approved modules. Only the owner can relist.
 
 ## Submitting Transactions via Bankr
 

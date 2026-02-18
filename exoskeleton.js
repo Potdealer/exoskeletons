@@ -35,6 +35,7 @@ const CONTRACTS = {
   renderer: "0xE559f88f124AA2354B1570b85f6BE9536B6D60bC",
   registry: "0x46fd56417dcd08cA8de1E12dd6e7f7E1b791B3E9",
   wallet: "0x78aF4B6D78a116dEDB3612A30365718B076894b9",
+  marketplace: "0x0E760171da676c219F46f289901D0be1CBD06188",
 };
 
 const RPC_URL = "https://mainnet.base.org";
@@ -108,6 +109,39 @@ const RENDERER_ABI = [
   "function renderSVG(uint256 tokenId) view returns (string)",
 ];
 
+const MARKETPLACE_ABI = [
+  // Builder
+  "function registerBuilder(string name, string bio)",
+  "function updateBuilderProfile(string name, string bio)",
+  "function getBuilder(address builderAddr) view returns (string name, string bio, uint256 modulesSubmitted, uint256 totalEarnings, bool registered)",
+  // Module submission
+  "function submitModule(bytes32 moduleName, string name, string description, string version, uint256 price) payable",
+  // Activation
+  "function activateModule(uint256 tokenId, bytes32 moduleName) payable",
+  "function deactivateModule(uint256 tokenId, bytes32 moduleName)",
+  // Builder updates
+  "function updateModulePrice(bytes32 moduleName, uint256 newPrice)",
+  "function updateModuleDescription(bytes32 moduleName, string newDescription)",
+  "function updateModuleVersion(bytes32 moduleName, string newVersion)",
+  "function builderDelistModule(bytes32 moduleName)",
+  // Views
+  "function getModule(bytes32 moduleName) view returns (address builder, string name, string description, string version, uint256 price, uint8 status, uint256 submittedAt, uint256 approvedAt, uint256 moduleActivations, uint256 moduleRevenue)",
+  "function isModuleActive(uint256 tokenId, bytes32 moduleName) view returns (bool)",
+  "function getActivation(uint256 tokenId, bytes32 moduleName) view returns (bool active, uint256 activatedAt)",
+  "function getTokenActiveModules(uint256 tokenId) view returns (bytes32[])",
+  "function getBuilderModules(address builderAddr) view returns (bytes32[])",
+  "function getAllModuleNames() view returns (bytes32[])",
+  "function getPendingQueue() view returns (bytes32[])",
+  "function getModuleCount() view returns (uint256)",
+  "function getPendingCount() view returns (uint256)",
+  "function getStats() view returns (uint256 totalModules, uint256 totalApproved, uint256 totalActivations, uint256 totalPlatformRevenue, uint256 pendingCount, uint256 listingFees)",
+  // Constants
+  "function PLATFORM_FEE_BPS() view returns (uint256)",
+  "function LISTING_FEE() view returns (uint256)",
+  "function MAX_PRICE() view returns (uint256)",
+  "function platformTreasury() view returns (address)",
+];
+
 // --- ABI Coder ---
 
 const coder = ethers.AbiCoder.defaultAbiCoder();
@@ -116,6 +150,7 @@ const iface = {
   registry: new ethers.Interface(REGISTRY_ABI),
   wallet: new ethers.Interface(WALLET_ABI),
   renderer: new ethers.Interface(RENDERER_ABI),
+  marketplace: new ethers.Interface(MARKETPLACE_ABI),
 };
 
 // --- Visual Config Constants ---
@@ -547,6 +582,103 @@ export class Exoskeleton {
   buildActivateWallet(tokenId) {
     const data = iface.wallet.encodeFunctionData("activateWallet", [tokenId]);
     return this._buildTx(this.contracts.wallet, data);
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  //  READ — MARKETPLACE
+  // ═══════════════════════════════════════════════════════════════
+
+  async getMarketplaceModule(moduleName) {
+    const data = iface.marketplace.encodeFunctionData("getModule", [moduleName]);
+    const result = await this.rpcCall(this.contracts.marketplace, data);
+    const d = iface.marketplace.decodeFunctionResult("getModule", result);
+    const STATUS_NAMES = ["NONE", "PENDING", "APPROVED", "REJECTED", "DELISTED"];
+    return {
+      builder: d.builder, name: d.name, description: d.description,
+      version: d.version, price: d.price, status: STATUS_NAMES[Number(d.status)] || "UNKNOWN",
+      statusCode: d.status, submittedAt: d.submittedAt, approvedAt: d.approvedAt,
+      totalActivations: d.moduleActivations, totalRevenue: d.moduleRevenue,
+    };
+  }
+
+  async getMarketplaceBuilder(builderAddr) {
+    const data = iface.marketplace.encodeFunctionData("getBuilder", [builderAddr]);
+    const result = await this.rpcCall(this.contracts.marketplace, data);
+    const d = iface.marketplace.decodeFunctionResult("getBuilder", result);
+    return { name: d.name, bio: d.bio, modulesSubmitted: d.modulesSubmitted, totalEarnings: d.totalEarnings, registered: d.registered };
+  }
+
+  async isMarketplaceModuleActive(tokenId, moduleName) {
+    const data = iface.marketplace.encodeFunctionData("isModuleActive", [tokenId, moduleName]);
+    const result = await this.rpcCall(this.contracts.marketplace, data);
+    return iface.marketplace.decodeFunctionResult("isModuleActive", result)[0];
+  }
+
+  async getMarketplaceActiveModules(tokenId) {
+    const data = iface.marketplace.encodeFunctionData("getTokenActiveModules", [tokenId]);
+    const result = await this.rpcCall(this.contracts.marketplace, data);
+    return iface.marketplace.decodeFunctionResult("getTokenActiveModules", result)[0];
+  }
+
+  async getMarketplaceStats() {
+    const data = iface.marketplace.encodeFunctionData("getStats", []);
+    const result = await this.rpcCall(this.contracts.marketplace, data);
+    const d = iface.marketplace.decodeFunctionResult("getStats", result);
+    return {
+      totalModules: d.totalModules, totalApproved: d.totalApproved,
+      totalActivations: d.totalActivations, totalPlatformRevenue: d.totalPlatformRevenue,
+      pendingCount: d.pendingCount, listingFees: d.listingFees,
+    };
+  }
+
+  async getMarketplaceModuleCount() {
+    const data = iface.marketplace.encodeFunctionData("getModuleCount", []);
+    const result = await this.rpcCall(this.contracts.marketplace, data);
+    return iface.marketplace.decodeFunctionResult("getModuleCount", result)[0];
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  //  WRITE — MARKETPLACE (returns Bankr tx JSON)
+  // ═══════════════════════════════════════════════════════════════
+
+  buildRegisterBuilder(name, bio) {
+    const data = iface.marketplace.encodeFunctionData("registerBuilder", [name, bio]);
+    return this._buildTx(this.contracts.marketplace, data);
+  }
+
+  buildSubmitModule(moduleName, name, description, version, price) {
+    const data = iface.marketplace.encodeFunctionData("submitModule", [moduleName, name, description, version, price]);
+    return this._buildTx(this.contracts.marketplace, data, "1000000000000000"); // 0.001 ETH listing fee
+  }
+
+  buildActivateMarketplaceModule(tokenId, moduleName, ethValue = "0") {
+    const data = iface.marketplace.encodeFunctionData("activateModule", [tokenId, moduleName]);
+    return this._buildTx(this.contracts.marketplace, data, ethValue.toString());
+  }
+
+  buildDeactivateMarketplaceModule(tokenId, moduleName) {
+    const data = iface.marketplace.encodeFunctionData("deactivateModule", [tokenId, moduleName]);
+    return this._buildTx(this.contracts.marketplace, data);
+  }
+
+  buildUpdateModulePrice(moduleName, newPrice) {
+    const data = iface.marketplace.encodeFunctionData("updateModulePrice", [moduleName, newPrice]);
+    return this._buildTx(this.contracts.marketplace, data);
+  }
+
+  buildUpdateModuleDescription(moduleName, newDescription) {
+    const data = iface.marketplace.encodeFunctionData("updateModuleDescription", [moduleName, newDescription]);
+    return this._buildTx(this.contracts.marketplace, data);
+  }
+
+  buildUpdateModuleVersion(moduleName, newVersion) {
+    const data = iface.marketplace.encodeFunctionData("updateModuleVersion", [moduleName, newVersion]);
+    return this._buildTx(this.contracts.marketplace, data);
+  }
+
+  buildBuilderDelistModule(moduleName) {
+    const data = iface.marketplace.encodeFunctionData("builderDelistModule", [moduleName]);
+    return this._buildTx(this.contracts.marketplace, data);
   }
 
   // ═══════════════════════════════════════════════════════════════
