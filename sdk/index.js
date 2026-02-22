@@ -18,7 +18,7 @@ import { ethers } from "ethers";
 
 export const ADDRESSES = {
   core: "0x8241BDD5009ed3F6C99737D2415994B58296Da0d",
-  renderer: "0xE559f88f124AA2354B1570b85f6BE9536B6D60bC",
+  renderer: "0xf000dF16982EAc46f1168ea2C9DE820BCbC5287d",
   registry: "0x46fd56417dcd08cA8de1E12dd6e7f7E1b791B3E9",
   wallet: "0x78aF4B6D78a116dEDB3612A30365718B076894b9",
   marketplace: "0x0E760171da676c219F46f289901D0be1CBD06188",
@@ -216,5 +216,99 @@ export function buildSetScoreTx(moduleAddress, tokenId, scoreType, scoreValue) {
     data: iface.encodeFunctionData("setScore", [tokenId, typeHash, scoreValue]),
     value: "0",
     chainId: ADDRESSES.chainId,
+  };
+}
+
+// ─── TBA (Token Bound Account) ABIs ────────────────────────────
+
+export const TBAV3ABI = [
+  "function execute(address to, uint256 value, bytes data, uint8 operation) payable returns (bytes)",
+  "function executeBatch((address to, uint256 value, bytes data, uint8 operation)[] operations) payable returns (bytes[])",
+  "function owner() view returns (address)",
+  "function isValidSignature(bytes32 hash, bytes signature) view returns (bytes4)",
+];
+
+export const ERC20TransferABI = [
+  "function transfer(address to, uint256 amount) returns (bool)",
+  "function approve(address spender, uint256 amount) returns (bool)",
+  "function balanceOf(address account) view returns (uint256)",
+];
+
+export const ERC721TransferABI = [
+  "function safeTransferFrom(address from, address to, uint256 tokenId)",
+  "function transferFrom(address from, address to, uint256 tokenId)",
+  "function ownerOf(uint256 tokenId) view returns (address)",
+];
+
+// ─── TBA Transaction Builders (standalone, no class instance) ──
+
+/**
+ * Build a TBA execute transaction. Wraps inner calldata in Tokenbound's execute().
+ * @param {string} tbaAddress - The TBA contract address
+ * @param {string} target - Target contract to call
+ * @param {string} innerData - Encoded calldata for the target
+ * @param {string} innerValue - ETH value for the inner call (default "0")
+ * @returns {{ to: string, data: string, value: string, chainId: number }}
+ */
+export function buildTBAExecuteTx(tbaAddress, target, innerData, innerValue = "0") {
+  const iface = new ethers.Interface(TBAV3ABI);
+  return {
+    to: tbaAddress,
+    data: iface.encodeFunctionData("execute", [target, innerValue, innerData, 0]),
+    value: "0",
+    chainId: ADDRESSES.chainId,
+  };
+}
+
+/**
+ * Build a TBA batch execute transaction.
+ * @param {string} tbaAddress - The TBA contract address
+ * @param {{ target: string, value?: string, data?: string }[]} operations
+ * @returns {{ to: string, data: string, value: string, chainId: number }}
+ */
+export function buildTBABatchExecuteTx(tbaAddress, operations) {
+  const iface = new ethers.Interface(TBAV3ABI);
+  const tuples = operations.map(op => ({
+    to: op.target,
+    value: op.value || "0",
+    data: op.data || "0x",
+    operation: 0,
+  }));
+  return {
+    to: tbaAddress,
+    data: iface.encodeFunctionData("executeBatch", [tuples]),
+    value: "0",
+    chainId: ADDRESSES.chainId,
+  };
+}
+
+/**
+ * Encode an ERC-20 transfer as inner calldata for TBA execute.
+ * @param {string} tokenAddress - ERC-20 token contract
+ * @param {string} recipient - Recipient address
+ * @param {bigint|string} amount - Amount in wei
+ * @returns {{ target: string, data: string }}
+ */
+export function encodeTBATransferERC20(tokenAddress, recipient, amount) {
+  const iface = new ethers.Interface(ERC20TransferABI);
+  return {
+    target: tokenAddress,
+    data: iface.encodeFunctionData("transfer", [recipient, amount]),
+  };
+}
+
+/**
+ * Encode an ERC-721 safeTransferFrom as inner calldata for TBA execute.
+ * @param {string} nftContract - ERC-721 contract address
+ * @param {string} from - Current owner (the TBA address)
+ * @param {string} recipient - Recipient address
+ * @param {number|bigint} nftTokenId - NFT token ID
+ * @returns {{ target: string, data: string }}
+ */
+export function encodeTBATransferNFT(nftContract, from, recipient, nftTokenId) {
+  const iface = new ethers.Interface(ERC721TransferABI);
+  return {
+    target: nftContract,
+    data: iface.encodeFunctionData("safeTransferFrom", [from, recipient, nftTokenId]),
   };
 }

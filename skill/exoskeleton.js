@@ -35,7 +35,6 @@ const CONTRACTS = {
   renderer: "0xf000dF16982EAc46f1168ea2C9DE820BCbC5287d",
   registry: "0x46fd56417dcd08cA8de1E12dd6e7f7E1b791B3E9",
   wallet: "0x78aF4B6D78a116dEDB3612A30365718B076894b9",
-  marketplace: "0x0E760171da676c219F46f289901D0be1CBD06188",
 };
 
 const RPC_URL = "https://mainnet.base.org";
@@ -109,60 +108,6 @@ const RENDERER_ABI = [
   "function renderSVG(uint256 tokenId) view returns (string)",
 ];
 
-const MARKETPLACE_ABI = [
-  // Builder
-  "function registerBuilder(string name, string bio)",
-  "function updateBuilderProfile(string name, string bio)",
-  "function getBuilder(address builderAddr) view returns (string name, string bio, uint256 modulesSubmitted, uint256 totalEarnings, bool registered)",
-  // Module submission
-  "function submitModule(bytes32 moduleName, string name, string description, string version, uint256 price) payable",
-  // Activation
-  "function activateModule(uint256 tokenId, bytes32 moduleName) payable",
-  "function deactivateModule(uint256 tokenId, bytes32 moduleName)",
-  // Builder updates
-  "function updateModulePrice(bytes32 moduleName, uint256 newPrice)",
-  "function updateModuleDescription(bytes32 moduleName, string newDescription)",
-  "function updateModuleVersion(bytes32 moduleName, string newVersion)",
-  "function builderDelistModule(bytes32 moduleName)",
-  // Views
-  "function getModule(bytes32 moduleName) view returns (address builder, string name, string description, string version, uint256 price, uint8 status, uint256 submittedAt, uint256 approvedAt, uint256 moduleActivations, uint256 moduleRevenue)",
-  "function isModuleActive(uint256 tokenId, bytes32 moduleName) view returns (bool)",
-  "function getActivation(uint256 tokenId, bytes32 moduleName) view returns (bool active, uint256 activatedAt)",
-  "function getTokenActiveModules(uint256 tokenId) view returns (bytes32[])",
-  "function getBuilderModules(address builderAddr) view returns (bytes32[])",
-  "function getAllModuleNames() view returns (bytes32[])",
-  "function getPendingQueue() view returns (bytes32[])",
-  "function getModuleCount() view returns (uint256)",
-  "function getPendingCount() view returns (uint256)",
-  "function getStats() view returns (uint256 totalModules, uint256 totalApproved, uint256 totalActivations, uint256 totalPlatformRevenue, uint256 pendingCount, uint256 listingFees)",
-  // Constants
-  "function PLATFORM_FEE_BPS() view returns (uint256)",
-  "function LISTING_FEE() view returns (uint256)",
-  "function MAX_PRICE() view returns (uint256)",
-  "function platformTreasury() view returns (address)",
-];
-
-const TBA_ABI = [
-  "function execute(address to, uint256 value, bytes data, uint8 operation) payable returns (bytes)",
-  "function executeBatch((address to, uint256 value, bytes data, uint8 operation)[] operations) payable returns (bytes[])",
-  "function owner() view returns (address)",
-  "function isValidSignature(bytes32 hash, bytes signature) view returns (bytes4)",
-];
-
-const ERC20_ABI = [
-  "function transfer(address to, uint256 amount) returns (bool)",
-  "function approve(address spender, uint256 amount) returns (bool)",
-  "function balanceOf(address account) view returns (uint256)",
-  "function decimals() view returns (uint8)",
-  "function symbol() view returns (string)",
-];
-
-const ERC721_ABI = [
-  "function safeTransferFrom(address from, address to, uint256 tokenId)",
-  "function transferFrom(address from, address to, uint256 tokenId)",
-  "function ownerOf(uint256 tokenId) view returns (address)",
-];
-
 // --- ABI Coder ---
 
 const coder = ethers.AbiCoder.defaultAbiCoder();
@@ -171,15 +116,10 @@ const iface = {
   registry: new ethers.Interface(REGISTRY_ABI),
   wallet: new ethers.Interface(WALLET_ABI),
   renderer: new ethers.Interface(RENDERER_ABI),
-  marketplace: new ethers.Interface(MARKETPLACE_ABI),
-  tba: new ethers.Interface(TBA_ABI),
-  erc20: new ethers.Interface(ERC20_ABI),
-  erc721: new ethers.Interface(ERC721_ABI),
 };
 
 // --- Visual Config Constants ---
 
-export { TBA_ABI, ERC20_ABI, ERC721_ABI };
 export const SHAPES = ["hexagon", "circle", "diamond", "shield", "octagon", "triangle"];
 export const SYMBOLS = ["none", "eye", "gear", "bolt", "star", "wave", "node", "diamond"];
 export const PATTERNS = ["none", "grid", "dots", "lines", "circuits", "rings"];
@@ -464,84 +404,6 @@ export class Exoskeleton {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  //  READ — TBA (Token Bound Account)
-  // ═══════════════════════════════════════════════════════════════
-
-  async getTBABalance(tokenId) {
-    const tbaAddr = await this.getWalletAddress(tokenId);
-    const resp = await fetch(this.rpcUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        method: "eth_getBalance",
-        params: [tbaAddr, "latest"],
-        id: 1,
-      }),
-    });
-    const result = await resp.json();
-    if (result.error) throw new Error(`RPC error: ${JSON.stringify(result.error)}`);
-    return BigInt(result.result);
-  }
-
-  async getTBATokenBalance(tokenId, tokenAddress) {
-    const tbaAddr = await this.getWalletAddress(tokenId);
-    const data = iface.erc20.encodeFunctionData("balanceOf", [tbaAddr]);
-    const result = await this.rpcCall(tokenAddress, data);
-    const decoded = iface.erc20.decodeFunctionResult("balanceOf", result);
-    return decoded[0];
-  }
-
-  async getTBAStatus(tokenId) {
-    const hasW = await this.hasWallet(tokenId);
-    const tbaAddr = await this.getWalletAddress(tokenId);
-    let ethBalance = 0n;
-    let owner = ethers.ZeroAddress;
-    if (hasW) {
-      const resp = await fetch(this.rpcUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          method: "eth_getBalance",
-          params: [tbaAddr, "latest"],
-          id: 1,
-        }),
-      });
-      const balResult = await resp.json();
-      if (!balResult.error) ethBalance = BigInt(balResult.result);
-      try {
-        const ownerData = iface.tba.encodeFunctionData("owner", []);
-        const ownerResult = await this.rpcCall(tbaAddr, ownerData);
-        owner = iface.tba.decodeFunctionResult("owner", ownerResult)[0];
-      } catch { /* TBA may not support owner() */ }
-    }
-    return { activated: hasW, address: tbaAddr, ethBalance, owner };
-  }
-
-  async tbaSupportsERC1271(tokenId) {
-    const tbaAddr = await this.getWalletAddress(tokenId);
-    const hasW = await this.hasWallet(tokenId);
-    if (!hasW) return false;
-    try {
-      const dummyHash = ethers.ZeroHash;
-      const dummySig = "0x";
-      const data = iface.tba.encodeFunctionData("isValidSignature", [dummyHash, dummySig]);
-      await this.rpcCall(tbaAddr, data);
-      // Got a response — function exists, ERC-1271 supported
-      return true;
-    } catch (e) {
-      // Reverts with revert data mean the function exists (ERC-1271 supported)
-      // but RPC/network errors are inconclusive
-      if (e.message && (e.message.includes("rate limit") || e.message.includes("timeout"))) {
-        return null; // inconclusive — caller should retry
-      }
-      // execution reverted = function exists but rejected our dummy sig
-      return true;
-    }
-  }
-
-  // ═══════════════════════════════════════════════════════════════
   //  READ — RENDERER
   // ═══════════════════════════════════════════════════════════════
 
@@ -685,200 +547,6 @@ export class Exoskeleton {
   buildActivateWallet(tokenId) {
     const data = iface.wallet.encodeFunctionData("activateWallet", [tokenId]);
     return this._buildTx(this.contracts.wallet, data);
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  //  WRITE — TBA OPERATIONS (returns Bankr tx JSON)
-  // ═══════════════════════════════════════════════════════════════
-
-  /**
-   * Core TBA execute wrapper. All TBA operations go through this.
-   * Wraps inner calldata in Tokenbound's execute(target, value, data, 0).
-   * Returns Bankr tx JSON targeting the TBA address.
-   */
-  async buildTBAExecute(tokenId, target, innerData, innerValue = "0") {
-    const tbaAddr = await this.getWalletAddress(tokenId);
-    const data = iface.tba.encodeFunctionData("execute", [
-      target, innerValue, innerData, 0,
-    ]);
-    return this._buildTx(tbaAddr, data);
-  }
-
-  /** Send ETH from a TBA. */
-  async buildTBASendETH(tokenId, recipient, amount) {
-    const tbaAddr = await this.getWalletAddress(tokenId);
-    const value = typeof amount === "string" && !amount.startsWith("0x")
-      ? ethers.parseEther(amount).toString()
-      : amount.toString();
-    const data = iface.tba.encodeFunctionData("execute", [
-      recipient, value, "0x", 0,
-    ]);
-    return this._buildTx(tbaAddr, data);
-  }
-
-  /** Send ERC-20 tokens from a TBA. */
-  async buildTBASendERC20(tokenId, tokenAddress, recipient, amount) {
-    const tbaAddr = await this.getWalletAddress(tokenId);
-    const innerData = iface.erc20.encodeFunctionData("transfer", [recipient, amount]);
-    const data = iface.tba.encodeFunctionData("execute", [
-      tokenAddress, 0, innerData, 0,
-    ]);
-    return this._buildTx(tbaAddr, data);
-  }
-
-  /** Approve ERC-20 spending from a TBA. */
-  async buildTBAApproveERC20(tokenId, tokenAddress, spender, amount) {
-    const tbaAddr = await this.getWalletAddress(tokenId);
-    const innerData = iface.erc20.encodeFunctionData("approve", [spender, amount]);
-    const data = iface.tba.encodeFunctionData("execute", [
-      tokenAddress, 0, innerData, 0,
-    ]);
-    return this._buildTx(tbaAddr, data);
-  }
-
-  /** Transfer an ERC-721 NFT from a TBA. Sets `from` to the TBA address. */
-  async buildTBATransferNFT(tokenId, nftContract, recipient, nftTokenId) {
-    const tbaAddr = await this.getWalletAddress(tokenId);
-    const innerData = iface.erc721.encodeFunctionData("safeTransferFrom", [
-      tbaAddr, recipient, nftTokenId,
-    ]);
-    const data = iface.tba.encodeFunctionData("execute", [
-      nftContract, 0, innerData, 0,
-    ]);
-    return this._buildTx(tbaAddr, data);
-  }
-
-  /**
-   * Arbitrary contract call from a TBA using human-readable function signature.
-   * @param tokenId Exo token ID
-   * @param target Target contract address
-   * @param functionSig e.g. "transfer(address,uint256)"
-   * @param args Array of arguments matching the function signature
-   * @param value ETH value to send (default "0")
-   */
-  async buildTBAContractCall(tokenId, target, functionSig, args = [], value = "0") {
-    const tbaAddr = await this.getWalletAddress(tokenId);
-    const fnIface = new ethers.Interface([`function ${functionSig}`]);
-    const fnName = functionSig.split("(")[0];
-    const innerData = fnIface.encodeFunctionData(fnName, args);
-    const data = iface.tba.encodeFunctionData("execute", [
-      target, value, innerData, 0,
-    ]);
-    return this._buildTx(tbaAddr, data);
-  }
-
-  /**
-   * Batch execute multiple operations from a TBA in one transaction.
-   * @param tokenId Exo token ID
-   * @param operations Array of { target, value, data } objects
-   */
-  async buildTBABatchExecute(tokenId, operations) {
-    const tbaAddr = await this.getWalletAddress(tokenId);
-    const tuples = operations.map(op => ({
-      to: op.target,
-      value: op.value || "0",
-      data: op.data || "0x",
-      operation: 0,
-    }));
-    const data = iface.tba.encodeFunctionData("executeBatch", [tuples]);
-    return this._buildTx(tbaAddr, data);
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  //  READ — MARKETPLACE
-  // ═══════════════════════════════════════════════════════════════
-
-  async getMarketplaceModule(moduleName) {
-    const data = iface.marketplace.encodeFunctionData("getModule", [moduleName]);
-    const result = await this.rpcCall(this.contracts.marketplace, data);
-    const d = iface.marketplace.decodeFunctionResult("getModule", result);
-    const STATUS_NAMES = ["NONE", "PENDING", "APPROVED", "REJECTED", "DELISTED"];
-    return {
-      builder: d.builder, name: d.name, description: d.description,
-      version: d.version, price: d.price, status: STATUS_NAMES[Number(d.status)] || "UNKNOWN",
-      statusCode: d.status, submittedAt: d.submittedAt, approvedAt: d.approvedAt,
-      totalActivations: d.moduleActivations, totalRevenue: d.moduleRevenue,
-    };
-  }
-
-  async getMarketplaceBuilder(builderAddr) {
-    const data = iface.marketplace.encodeFunctionData("getBuilder", [builderAddr]);
-    const result = await this.rpcCall(this.contracts.marketplace, data);
-    const d = iface.marketplace.decodeFunctionResult("getBuilder", result);
-    return { name: d.name, bio: d.bio, modulesSubmitted: d.modulesSubmitted, totalEarnings: d.totalEarnings, registered: d.registered };
-  }
-
-  async isMarketplaceModuleActive(tokenId, moduleName) {
-    const data = iface.marketplace.encodeFunctionData("isModuleActive", [tokenId, moduleName]);
-    const result = await this.rpcCall(this.contracts.marketplace, data);
-    return iface.marketplace.decodeFunctionResult("isModuleActive", result)[0];
-  }
-
-  async getMarketplaceActiveModules(tokenId) {
-    const data = iface.marketplace.encodeFunctionData("getTokenActiveModules", [tokenId]);
-    const result = await this.rpcCall(this.contracts.marketplace, data);
-    return iface.marketplace.decodeFunctionResult("getTokenActiveModules", result)[0];
-  }
-
-  async getMarketplaceStats() {
-    const data = iface.marketplace.encodeFunctionData("getStats", []);
-    const result = await this.rpcCall(this.contracts.marketplace, data);
-    const d = iface.marketplace.decodeFunctionResult("getStats", result);
-    return {
-      totalModules: d.totalModules, totalApproved: d.totalApproved,
-      totalActivations: d.totalActivations, totalPlatformRevenue: d.totalPlatformRevenue,
-      pendingCount: d.pendingCount, listingFees: d.listingFees,
-    };
-  }
-
-  async getMarketplaceModuleCount() {
-    const data = iface.marketplace.encodeFunctionData("getModuleCount", []);
-    const result = await this.rpcCall(this.contracts.marketplace, data);
-    return iface.marketplace.decodeFunctionResult("getModuleCount", result)[0];
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  //  WRITE — MARKETPLACE (returns Bankr tx JSON)
-  // ═══════════════════════════════════════════════════════════════
-
-  buildRegisterBuilder(name, bio) {
-    const data = iface.marketplace.encodeFunctionData("registerBuilder", [name, bio]);
-    return this._buildTx(this.contracts.marketplace, data);
-  }
-
-  buildSubmitModule(moduleName, name, description, version, price) {
-    const data = iface.marketplace.encodeFunctionData("submitModule", [moduleName, name, description, version, price]);
-    return this._buildTx(this.contracts.marketplace, data, "1000000000000000"); // 0.001 ETH listing fee
-  }
-
-  buildActivateMarketplaceModule(tokenId, moduleName, ethValue = "0") {
-    const data = iface.marketplace.encodeFunctionData("activateModule", [tokenId, moduleName]);
-    return this._buildTx(this.contracts.marketplace, data, ethValue.toString());
-  }
-
-  buildDeactivateMarketplaceModule(tokenId, moduleName) {
-    const data = iface.marketplace.encodeFunctionData("deactivateModule", [tokenId, moduleName]);
-    return this._buildTx(this.contracts.marketplace, data);
-  }
-
-  buildUpdateModulePrice(moduleName, newPrice) {
-    const data = iface.marketplace.encodeFunctionData("updateModulePrice", [moduleName, newPrice]);
-    return this._buildTx(this.contracts.marketplace, data);
-  }
-
-  buildUpdateModuleDescription(moduleName, newDescription) {
-    const data = iface.marketplace.encodeFunctionData("updateModuleDescription", [moduleName, newDescription]);
-    return this._buildTx(this.contracts.marketplace, data);
-  }
-
-  buildUpdateModuleVersion(moduleName, newVersion) {
-    const data = iface.marketplace.encodeFunctionData("updateModuleVersion", [moduleName, newVersion]);
-    return this._buildTx(this.contracts.marketplace, data);
-  }
-
-  buildBuilderDelistModule(moduleName) {
-    const data = iface.marketplace.encodeFunctionData("builderDelistModule", [moduleName]);
-    return this._buildTx(this.contracts.marketplace, data);
   }
 
   // ═══════════════════════════════════════════════════════════════
