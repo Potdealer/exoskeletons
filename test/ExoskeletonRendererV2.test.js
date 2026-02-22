@@ -7,8 +7,6 @@ describe("ExoskeletonRendererV2", function () {
   let core, renderer;
   let owner, alice, bob, treasury;
 
-  const GENESIS_PRICE = ethers.parseEther("0.005");
-
   async function deployFixture() {
     [owner, alice, bob, treasury] = await ethers.getSigners();
 
@@ -38,16 +36,50 @@ describe("ExoskeletonRendererV2", function () {
     return new Uint8Array([shape, r1, g1, b1, r2, g2, b2, symbol, pattern]);
   }
 
-  // Genesis tokens get 1.5x multiplier on repScore.
-  // repScore = (age_blocks + activity) * 1.5 for genesis
-  // To reach a tier, mine enough blocks.
-  // Non-genesis: repScore = age_blocks + activity
-  async function mineToRepScore(targetScore, isGenesis) {
-    // account for a few blocks already mined during setup
-    const blocksNeeded = isGenesis
-      ? Math.ceil((targetScore * 100) / 150)
-      : targetScore;
-    await networkHelpers.mine(blocksNeeded + 5); // +5 buffer for setup blocks
+  // ─── Activity Helpers ───────────────────────────────────────────
+  // Activity = messages + writes*2 + modules*10, genesis gets 1.5x
+
+  // Send N messages from a token (requires 2 tokens for messaging)
+  async function sendMessages(signer, fromToken, toToken, count) {
+    const channel = ethers.keccak256(ethers.toUtf8Bytes("test"));
+    for (let i = 0; i < count; i++) {
+      await core.connect(signer).sendMessage(fromToken, toToken, channel, 0, ethers.toUtf8Bytes("msg"));
+    }
+  }
+
+  // Write N storage entries on a token
+  async function writeStorage(signer, tokenId, count) {
+    for (let i = 0; i < count; i++) {
+      const key = ethers.keccak256(ethers.toUtf8Bytes("key-" + i));
+      await core.connect(signer).setData(tokenId, key, ethers.toUtf8Bytes("val"));
+    }
+  }
+
+  // Register and activate N modules on a token
+  async function activateModules(signer, tokenId, count) {
+    for (let i = 0; i < count; i++) {
+      const modName = ethers.keccak256(ethers.toUtf8Bytes("mod-" + tokenId + "-" + i));
+      await core.registerModule(modName, signer.address, false, 0);
+      await core.connect(signer).activateModule(tokenId, modName);
+    }
+  }
+
+  // Mint 2 genesis tokens for alice so we can send messages between them
+  async function setupWithMessaging() {
+    await deployFixture();
+    await mintExoskeleton(alice); // genesis #1
+    await mintExoskeleton(alice); // genesis #2
+  }
+
+  // Reach Diamond efficiently: 8 modules (80) + 254 writes (508) + 80 msgs = 668 raw * 1.5 = 1002
+  // Max 8 modules per genesis token, so we supplement with writes (2x) and msgs
+  async function reachDiamond(signer, tokenId, otherTokenId) {
+    // 8 modules = 80 raw
+    await activateModules(signer, tokenId, 8);
+    // 254 writes = 508 raw
+    await writeStorage(signer, tokenId, 254);
+    // 80 msgs = 80 raw. Total: 80 + 508 + 80 = 668. * 1.5 = 1002
+    await sendMessages(signer, tokenId, otherTokenId, 80);
   }
 
   describe("Deployment", function () {
@@ -64,41 +96,31 @@ describe("ExoskeletonRendererV2", function () {
   });
 
   // ═══════════════════════════════════════════════════════════════
-  //  TIER CALCULATION
+  //  TIER CALCULATION (activity-based)
   // ═══════════════════════════════════════════════════════════════
 
   describe("Tier System", function () {
     beforeEach(async function () {
-      await deployFixture();
+      await setupWithMessaging();
     });
 
-    it("Should be Dormant at repScore 0 (no style block)", async function () {
-      await mintExoskeleton(alice);
+    it("Should be Dormant with 0 activity (no style block)", async function () {
       const svg = await renderer.renderSVG(1);
 
       expect(svg).to.not.include("<style>");
       expect(svg).to.not.include("@keyframes");
     });
 
-    it("Should be Dormant at repScore 99 (no animations)", async function () {
-      // Non-genesis token needs bob to mint (alice gets genesis #1)
-      await mintExoskeleton(alice); // genesis #1
-      await core.setWhitelist(bob.address, true);
-      await mintExoskeleton(bob); // non-genesis #2
-      // Mine 95 blocks — repScore ~95 for non-genesis (under 100 accounting for setup blocks)
-      await networkHelpers.mine(90);
-      const repScore = await core.getReputationScore(2);
-      // Might be slightly above 90 due to setup blocks, but below 100
-      // Just verify no animations if under 100
-      if (repScore < 100n) {
-        const svg = await renderer.renderSVG(2);
-        expect(svg).to.not.include("<style>");
-      }
+    it("Should be Dormant with activity below 5 (genesis: raw < 4)", async function () {
+      // Genesis 1.5x: 2 msgs = 2 * 1.5 = 3 activity. Under 5 = Dormant
+      await sendMessages(alice, 1, 2, 2);
+      const svg = await renderer.renderSVG(1);
+      expect(svg).to.not.include("<style>");
     });
 
-    it("Should reach Copper tier at repScore 100+ (breathe + shimmer)", async function () {
-      await mintExoskeleton(alice); // genesis #1, 1.5x multiplier
-      await networkHelpers.mine(70); // ~70 * 1.5 = 105 repScore
+    it("Should reach Copper at activity 5+ (breathe + shimmer)", async function () {
+      // Genesis 1.5x: 4 msgs = 4 * 1.5 = 6 activity. >= 5 = Copper
+      await sendMessages(alice, 1, 2, 4);
       const svg = await renderer.renderSVG(1);
 
       expect(svg).to.include("<style>");
@@ -112,9 +134,9 @@ describe("ExoskeletonRendererV2", function () {
       expect(svg).to.not.include("@keyframes drift-up");
     });
 
-    it("Should reach Silver tier at repScore 500+ (+ glow-pulse, node-pulse)", async function () {
-      await mintExoskeleton(alice); // genesis
-      await networkHelpers.mine(340); // ~340 * 1.5 = 510 repScore
+    it("Should reach Silver at activity 50+ (+ glow-pulse, node-pulse)", async function () {
+      // Genesis 1.5x: 34 msgs = 34 * 1.5 = 51 activity. >= 50 = Silver
+      await sendMessages(alice, 1, 2, 34);
       const svg = await renderer.renderSVG(1);
 
       expect(svg).to.include("@keyframes breathe");
@@ -127,9 +149,10 @@ describe("ExoskeletonRendererV2", function () {
       expect(svg).to.not.include("@keyframes drift-up");
     });
 
-    it("Should reach Gold tier at repScore 2000+ (+ ring rotation)", async function () {
-      await mintExoskeleton(alice); // genesis
-      await networkHelpers.mine(1340); // ~1340 * 1.5 = 2010 repScore
+    it("Should reach Gold at activity 200+ (+ ring rotation)", async function () {
+      // Genesis 1.5x: 5 modules = 50 * 1.5 = 75, + 84 msgs = 84*1.5 = 126. Total ~201
+      await activateModules(alice, 1, 5);
+      await sendMessages(alice, 1, 2, 84);
       const svg = await renderer.renderSVG(1);
 
       expect(svg).to.include("@keyframes breathe");
@@ -144,9 +167,10 @@ describe("ExoskeletonRendererV2", function () {
       expect(svg).to.not.include("@keyframes badge-glow");
     });
 
-    it("Should reach Diamond tier at repScore 10000+ (all animations)", async function () {
-      await mintExoskeleton(alice); // genesis
-      await networkHelpers.mine(6700); // ~6700 * 1.5 = 10050 repScore
+    it("Should reach Diamond at activity 1000+ (all animations)", async function () {
+      this.timeout(120000);
+      // Genesis 1.5x: 67 modules = 670 * 1.5 = 1005 activity
+      await reachDiamond(alice, 1, 2);
       const svg = await renderer.renderSVG(1);
 
       // All animation keyframes present
@@ -161,6 +185,18 @@ describe("ExoskeletonRendererV2", function () {
       expect(svg).to.include('class="tier-badge"');
       expect(svg).to.include('class="particle"');
     });
+
+    it("Genesis 1.5x multiplier: 3 raw msgs (4.5) = Dormant, 4 raw msgs (6) = Copper", async function () {
+      // Genesis 1.5x: 3 msgs * 1.5 = 4.5, floored to 4 (integer math: 3*3/2=4). Under 5 = Dormant
+      await sendMessages(alice, 1, 2, 3);
+      const svg = await renderer.renderSVG(1);
+      expect(svg).to.not.include("<style>");
+
+      // 1 more msg: total 4 msgs * 1.5 = 6. >= 5 = Copper
+      await sendMessages(alice, 1, 2, 1);
+      const svg2 = await renderer.renderSVG(1);
+      expect(svg2).to.include("@keyframes breathe");
+    });
   });
 
   // ═══════════════════════════════════════════════════════════════
@@ -169,11 +205,10 @@ describe("ExoskeletonRendererV2", function () {
 
   describe("Tier Badge", function () {
     beforeEach(async function () {
-      await deployFixture();
+      await setupWithMessaging();
     });
 
     it("Should show no badge for Dormant", async function () {
-      await mintExoskeleton(alice);
       const svg = await renderer.renderSVG(1);
       expect(svg).to.not.include("COPPER");
       expect(svg).to.not.include("SILVER");
@@ -182,32 +217,30 @@ describe("ExoskeletonRendererV2", function () {
     });
 
     it("Should show Copper badge with correct color", async function () {
-      await mintExoskeleton(alice);
-      await networkHelpers.mine(70);
+      await sendMessages(alice, 1, 2, 4); // 4*1.5=6 activity
       const svg = await renderer.renderSVG(1);
       expect(svg).to.include("COPPER");
       expect(svg).to.include("#cd7f32");
     });
 
     it("Should show Silver badge with correct color", async function () {
-      await mintExoskeleton(alice);
-      await networkHelpers.mine(340);
+      await sendMessages(alice, 1, 2, 34); // 34*1.5=51 activity
       const svg = await renderer.renderSVG(1);
       expect(svg).to.include("SILVER");
       expect(svg).to.include("#c0c0c0");
     });
 
     it("Should show Gold badge with correct color", async function () {
-      await mintExoskeleton(alice);
-      await networkHelpers.mine(1340);
+      await activateModules(alice, 1, 5);
+      await sendMessages(alice, 1, 2, 84); // (50+84)*1.5=201
       const svg = await renderer.renderSVG(1);
       expect(svg).to.include("GOLD");
       expect(svg).to.include("#ffd700");
     });
 
     it("Should show Diamond badge with glow animation class", async function () {
-      await mintExoskeleton(alice);
-      await networkHelpers.mine(6700);
+      this.timeout(120000);
+      await reachDiamond(alice, 1, 2);
       const svg = await renderer.renderSVG(1);
       expect(svg).to.include("DIAMOND");
       expect(svg).to.include("#b9f2ff");
@@ -221,29 +254,29 @@ describe("ExoskeletonRendererV2", function () {
 
   describe("Particles", function () {
     beforeEach(async function () {
-      await deployFixture();
+      await setupWithMessaging();
     });
 
     it("Should NOT have particles below Diamond", async function () {
-      await mintExoskeleton(alice);
-      await networkHelpers.mine(1340); // Gold
+      // Gold tier
+      await activateModules(alice, 1, 5);
+      await sendMessages(alice, 1, 2, 84);
       const svg = await renderer.renderSVG(1);
       expect(svg).to.not.include('class="particle"');
     });
 
     it("Should have 5 particles at Diamond tier", async function () {
-      await mintExoskeleton(alice);
-      await networkHelpers.mine(6700); // Diamond
+      this.timeout(120000);
+      await reachDiamond(alice, 1, 2);
       const svg = await renderer.renderSVG(1);
 
-      // Count particle occurrences
       const matches = svg.match(/class="particle"/g);
       expect(matches).to.have.lengthOf(5);
     });
 
     it("Should have staggered animation delays on particles", async function () {
-      await mintExoskeleton(alice);
-      await networkHelpers.mine(6700);
+      this.timeout(120000);
+      await reachDiamond(alice, 1, 2);
       const svg = await renderer.renderSVG(1);
 
       expect(svg).to.include("animation-delay:1.5s");
@@ -259,20 +292,19 @@ describe("ExoskeletonRendererV2", function () {
 
   describe("Enhanced Glow Filter", function () {
     beforeEach(async function () {
-      await deployFixture();
+      await setupWithMessaging();
     });
 
     it("Should use standard glow filter below Diamond", async function () {
-      await mintExoskeleton(alice);
-      await networkHelpers.mine(70); // Copper
+      await sendMessages(alice, 1, 2, 4); // Copper
       const svg = await renderer.renderSVG(1);
       expect(svg).to.include('stdDeviation="4"');
       expect(svg).to.include('flood-opacity="0.5"');
     });
 
     it("Should use enhanced glow filter at Diamond", async function () {
-      await mintExoskeleton(alice);
-      await networkHelpers.mine(6700); // Diamond
+      this.timeout(120000);
+      await reachDiamond(alice, 1, 2);
       const svg = await renderer.renderSVG(1);
       expect(svg).to.include('stdDeviation="6"');
       expect(svg).to.include('flood-opacity="0.7"');
@@ -285,86 +317,99 @@ describe("ExoskeletonRendererV2", function () {
 
   describe("Animation Classes", function () {
     beforeEach(async function () {
-      await deployFixture();
+      await setupWithMessaging();
     });
 
     it("Should NOT wrap shape in group for Dormant", async function () {
-      await mintExoskeleton(alice);
       const svg = await renderer.renderSVG(1);
       expect(svg).to.not.include('class="central-shape"');
     });
 
     it("Should wrap shape in breathing group for Copper+", async function () {
-      await mintExoskeleton(alice);
-      await networkHelpers.mine(70);
+      await sendMessages(alice, 1, 2, 4);
       const svg = await renderer.renderSVG(1);
       expect(svg).to.include('<g class="central-shape">');
     });
 
     it("Should NOT wrap symbol in group for Dormant", async function () {
-      await mintExoskeleton(alice);
       const svg = await renderer.renderSVG(1);
       expect(svg).to.not.include('class="symbol"');
     });
 
     it("Should wrap symbol in shimmer group for Copper+", async function () {
-      await mintExoskeleton(alice);
-      await networkHelpers.mine(70);
+      await sendMessages(alice, 1, 2, 4);
       const svg = await renderer.renderSVG(1);
       expect(svg).to.include('<g class="symbol">');
     });
 
     it("Should add rep-glow class for Silver+", async function () {
-      await mintExoskeleton(alice);
-      await networkHelpers.mine(340);
+      await sendMessages(alice, 1, 2, 34);
       const svg = await renderer.renderSVG(1);
       expect(svg).to.include('class="rep-glow"');
     });
 
     it("Should NOT have rep-glow class for Copper", async function () {
-      await mintExoskeleton(alice);
-      await networkHelpers.mine(70);
+      await sendMessages(alice, 1, 2, 4);
       const svg = await renderer.renderSVG(1);
       expect(svg).to.not.include('class="rep-glow"');
     });
 
-    it("Should add activity-node class for Silver+ modules", async function () {
-      await mintExoskeleton(alice);
-      // Register and activate a module
-      const modName = ethers.keccak256(ethers.toUtf8Bytes("test-mod"));
-      await core.registerModule(modName, alice.address, false, 0);
-      await core.connect(alice).activateModule(1, modName);
-      await networkHelpers.mine(340); // Silver
+    it("Should add activity-node class for Silver+ with modules", async function () {
+      // 1 module = 10, + 27 msgs = 27. Total raw 37 * 1.5 = 55.5 => Silver
+      await activateModules(alice, 1, 1);
+      await sendMessages(alice, 1, 2, 27);
       const svg = await renderer.renderSVG(1);
       expect(svg).to.include('class="activity-node"');
     });
 
-    it("Should use rotating ring groups for Gold+ (group 1)", async function () {
-      await mintExoskeleton(alice);
-      // Need enough blocks for at least 1 age ring (43200 blocks) + Gold rep
-      // 43200 blocks * 1.5 genesis multiplier = 64800 repScore (Diamond), 1 age ring
-      await networkHelpers.mine(43200);
+    it("Should use rotating ring groups for Gold+ with age rings", async function () {
+      // Need Gold activity + age rings (43200 blocks for 1 ring)
+      await activateModules(alice, 1, 5);
+      await sendMessages(alice, 1, 2, 84);
+      await networkHelpers.mine(43200); // 1 age ring
       const svg = await renderer.renderSVG(1);
-      // With 1 ring, only group 1 (ring-cw) is populated
       expect(svg).to.include('class="age-ring-group ring-cw"');
     });
 
-    it("Should wrap rings in groups at Gold+ but not below", async function () {
-      // Mint a non-genesis token (need to use bob for non-genesis)
-      await mintExoskeleton(alice); // genesis #1
-      await core.setWhitelist(bob.address, true);
-      await mintExoskeleton(bob); // non-genesis #2
+    it("Should NOT wrap rings in groups below Gold even with age rings", async function () {
+      // Copper activity + age rings
+      await sendMessages(alice, 1, 2, 4); // Copper
+      await networkHelpers.mine(43200); // 1 age ring
+      const svg = await renderer.renderSVG(1);
+      // Should have static ring (cy="250") but NOT wrapped in group
+      expect(svg).to.include('cy="250"');
+      expect(svg).to.not.include('class="age-ring-group');
+    });
+  });
 
-      // Mine enough for 1 age ring but NOT Gold tier for non-genesis
-      // 43200 blocks = 43200 repScore for non-genesis (Diamond actually)
-      // We need Silver (500-1999 rep) with 1 age ring — impossible since 43200 blocks = 43200 rep
-      // Instead, just verify Gold+ wraps and sub-Gold doesn't
-      // At Copper (100 rep, 70 blocks), ageRings = 0, so no rings at all
-      // Test: at Gold+ tier with rings, they are wrapped in <g> groups
-      await networkHelpers.mine(43200);
-      const svg = await renderer.renderSVG(1); // genesis, Diamond with 1 ring
-      expect(svg).to.include('<g class="age-ring-group');
-      expect(svg).to.include('</g>');
+  // ═══════════════════════════════════════════════════════════════
+  //  COMPLEXITY (tier-derived)
+  // ═══════════════════════════════════════════════════════════════
+
+  describe("Complexity", function () {
+    beforeEach(async function () {
+      await setupWithMessaging();
+    });
+
+    it("Dormant should have no pattern or glow (complexity=0)", async function () {
+      const config = buildConfig(0, 255, 0, 100, 100, 0, 255, 1, 5); // rings pattern
+      await core.connect(alice).setVisualConfig(1, config);
+      const svg = await renderer.renderSVG(1);
+      // Pattern=5 (rings) but complexity=0 → no pattern rendered
+      // Check that inner concentric rings don't appear
+      expect(svg).to.not.include('stroke-width="0.4" opacity="0.12"');
+    });
+
+    it("Copper should have complexity=2", async function () {
+      const config = buildConfig(0, 255, 0, 100, 100, 0, 255, 1, 5); // rings pattern
+      await core.connect(alice).setVisualConfig(1, config);
+      await sendMessages(alice, 1, 2, 4); // Copper
+      const svg = await renderer.renderSVG(1);
+      // Complexity=2 with rings pattern: 2 inner rings
+      // r = 20 + 1*12 = 32, r = 20 + 2*12 = 44
+      expect(svg).to.include('r="32"');
+      expect(svg).to.include('r="44"');
+      expect(svg).to.not.include('r="56"'); // would need complexity >= 3
     });
   });
 
@@ -420,6 +465,40 @@ describe("ExoskeletonRendererV2", function () {
   });
 
   // ═══════════════════════════════════════════════════════════════
+  //  AGE RINGS (separate from tier)
+  // ═══════════════════════════════════════════════════════════════
+
+  describe("Age Rings", function () {
+    beforeEach(async function () {
+      await deployFixture();
+    });
+
+    it("Should have 0 rings on a fresh mint", async function () {
+      await mintExoskeleton(alice);
+      const svg = await renderer.renderSVG(1);
+      expect(svg).to.not.include('stroke-dasharray');
+    });
+
+    it("Should have 1 ring after 43200 blocks", async function () {
+      await mintExoskeleton(alice);
+      await networkHelpers.mine(43200);
+      const svg = await renderer.renderSVG(1);
+      // 1 ring: static (Dormant tier), dashed stroke
+      expect(svg).to.include('stroke-dasharray="3 5"');
+    });
+
+    it("Should cap at 8 rings", async function () {
+      await mintExoskeleton(alice);
+      await networkHelpers.mine(43200 * 10); // 10 days worth, but cap is 8
+      const svg = await renderer.renderSVG(1);
+      // Ring 8: dasharray = "24 40"
+      expect(svg).to.include('stroke-dasharray="24 40"');
+      // Ring 9 would be "27 45" — should NOT exist
+      expect(svg).to.not.include('stroke-dasharray="27 45"');
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════
   //  ALL SHAPES STILL RENDER
   // ═══════════════════════════════════════════════════════════════
 
@@ -432,42 +511,42 @@ describe("ExoskeletonRendererV2", function () {
       const config = buildConfig(0, 255, 0, 100, 100, 0, 255, 1, 0);
       await mintExoskeleton(alice, config);
       const svg = await renderer.renderSVG(1);
-      expect(svg).to.include('points="250,160 319,200 319,280 250,320 181,280 181,200"');
+      expect(svg).to.include('points="250,170 319,210 319,290 250,330 181,290 181,210"');
     });
 
     it("Should generate circle shape (shape=1)", async function () {
       const config = buildConfig(1, 0, 255, 170, 0, 170, 255, 0, 0);
       await mintExoskeleton(alice, config);
       const svg = await renderer.renderSVG(1);
-      expect(svg).to.include('<circle cx="250" cy="240" r="80"');
+      expect(svg).to.include('<circle cx="250" cy="250" r="80"');
     });
 
     it("Should generate diamond shape (shape=2)", async function () {
       const config = buildConfig(2, 200, 100, 50, 100, 50, 200, 0, 0);
       await mintExoskeleton(alice, config);
       const svg = await renderer.renderSVG(1);
-      expect(svg).to.include('points="250,155 340,240 250,325 160,240"');
+      expect(svg).to.include('points="250,165 340,250 250,335 160,250"');
     });
 
     it("Should generate shield shape (shape=3)", async function () {
       const config = buildConfig(3, 100, 200, 50, 50, 100, 200, 0, 0);
       await mintExoskeleton(alice, config);
       const svg = await renderer.renderSVG(1);
-      expect(svg).to.include('<path d="M250,160');
+      expect(svg).to.include('<path d="M250,170');
     });
 
     it("Should generate octagon shape (shape=4)", async function () {
       const config = buildConfig(4, 150, 150, 255, 100, 100, 200, 0, 0);
       await mintExoskeleton(alice, config);
       const svg = await renderer.renderSVG(1);
-      expect(svg).to.include('points="217,160 283,160 330,207');
+      expect(svg).to.include('points="217,170 283,170 330,217');
     });
 
     it("Should generate triangle shape (shape=5)", async function () {
       const config = buildConfig(5, 255, 50, 50, 200, 50, 50, 0, 0);
       await mintExoskeleton(alice, config);
       const svg = await renderer.renderSVG(1);
-      expect(svg).to.include('points="250,155 345,325 155,325"');
+      expect(svg).to.include('points="250,165 345,335 155,335"');
     });
   });
 
@@ -484,49 +563,49 @@ describe("ExoskeletonRendererV2", function () {
       const config = buildConfig(0, 255, 215, 0, 255, 165, 0, 1, 0);
       await mintExoskeleton(alice, config);
       const svg = await renderer.renderSVG(1);
-      expect(svg).to.include('<ellipse cx="250" cy="240"');
+      expect(svg).to.include('<ellipse cx="250" cy="250"');
     });
 
     it("Should render gear symbol (symbol=2)", async function () {
       const config = buildConfig(0, 255, 215, 0, 255, 165, 0, 2, 0);
       await mintExoskeleton(alice, config);
       const svg = await renderer.renderSVG(1);
-      expect(svg).to.include('<circle cx="250" cy="240" r="12"');
+      expect(svg).to.include('<circle cx="250" cy="250" r="12"');
     });
 
     it("Should render bolt symbol (symbol=3)", async function () {
       const config = buildConfig(0, 255, 215, 0, 255, 165, 0, 3, 0);
       await mintExoskeleton(alice, config);
       const svg = await renderer.renderSVG(1);
-      expect(svg).to.include('points="255,225 245,238 258,238 243,258"');
+      expect(svg).to.include('points="255,235 245,248 258,248 243,268"');
     });
 
     it("Should render star symbol (symbol=4)", async function () {
       const config = buildConfig(0, 255, 215, 0, 255, 165, 0, 4, 0);
       await mintExoskeleton(alice, config);
       const svg = await renderer.renderSVG(1);
-      expect(svg).to.include("250,225 254,237 267,237");
+      expect(svg).to.include("250,235 254,247 267,247");
     });
 
     it("Should render wave symbol (symbol=5)", async function () {
       const config = buildConfig(0, 255, 215, 0, 255, 165, 0, 5, 0);
       await mintExoskeleton(alice, config);
       const svg = await renderer.renderSVG(1);
-      expect(svg).to.include('M230,240 Q240,228 250,240');
+      expect(svg).to.include('M230,250 Q240,238 250,250');
     });
 
     it("Should render node symbol (symbol=6)", async function () {
       const config = buildConfig(0, 255, 215, 0, 255, 165, 0, 6, 0);
       await mintExoskeleton(alice, config);
       const svg = await renderer.renderSVG(1);
-      expect(svg).to.include('<circle cx="250" cy="240" r="4"');
+      expect(svg).to.include('<circle cx="250" cy="250" r="4"');
     });
 
     it("Should render diamond symbol (symbol=7)", async function () {
       const config = buildConfig(0, 255, 215, 0, 255, 165, 0, 7, 0);
       await mintExoskeleton(alice, config);
       const svg = await renderer.renderSVG(1);
-      expect(svg).to.include('points="250,228 260,240 250,252 240,240"');
+      expect(svg).to.include('points="250,238 260,250 250,262 240,250"');
     });
   });
 
@@ -536,11 +615,10 @@ describe("ExoskeletonRendererV2", function () {
 
   describe("Integration with tokenURI", function () {
     beforeEach(async function () {
-      await deployFixture();
+      await setupWithMessaging();
     });
 
     it("Should produce valid tokenURI with V2 renderer", async function () {
-      await mintExoskeleton(alice);
       const uri = await core.tokenURI(1);
 
       expect(uri).to.match(/^data:application\/json;base64,/);
@@ -558,9 +636,8 @@ describe("ExoskeletonRendererV2", function () {
       expect(svg).to.include("GENESIS");
     });
 
-    it("Should include animations in tokenURI when tier is high enough", async function () {
-      await mintExoskeleton(alice);
-      await networkHelpers.mine(70); // Copper
+    it("Should include animations in tokenURI at Copper+", async function () {
+      await sendMessages(alice, 1, 2, 4); // Copper
 
       const uri = await core.tokenURI(1);
       const base64 = uri.replace("data:application/json;base64,", "");
@@ -573,9 +650,9 @@ describe("ExoskeletonRendererV2", function () {
     });
 
     it("Should work with custom name at Diamond tier", async function () {
-      await mintExoskeleton(alice);
+      this.timeout(120000);
       await core.connect(alice).setName(1, "Ollie");
-      await networkHelpers.mine(6700); // Diamond
+      await reachDiamond(alice, 1, 2);
 
       const svg = await renderer.renderSVG(1);
       expect(svg).to.include("Ollie");

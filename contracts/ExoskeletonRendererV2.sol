@@ -10,14 +10,16 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * @dev V2 adds tier-gated CSS keyframe animations that unlock as reputation grows.
  *      Deploy and call core.setRenderer(v2) — V1 stays deployed as instant rollback.
  *
- * Tier System:
+ * Tier System (activity-based — age drives rings, activity drives animations):
+ *   Activity = messages + (writes × 2) + (modules × 10), genesis gets 1.5×
  *   Dormant  (0)      — Static SVG, identical to V1
- *   Copper   (100+)   — Breathing shape, symbol shimmer
- *   Silver   (500+)   — + Pulsing glow, activity node pulse
- *   Gold     (2000+)  — + Rotating age rings (3 groups, different speeds)
- *   Diamond  (10000+) — + Drifting particles, tier badge glow, enhanced glow filter
+ *   Copper   (5+)     — Breathing shape, symbol shimmer
+ *   Silver   (50+)    — + Pulsing glow, activity node pulse
+ *   Gold     (200+)   — + Rotating age rings (3 groups, different speeds)
+ *   Diamond  (1000+)  — + Drifting particles, tier badge glow, enhanced glow filter
  *
  * Each tier includes all animations from tiers below it.
+ * Age contributes orbital rings (1 per day, cosmetic). Activity drives art evolution.
  *
  * Visual Config Format (packed bytes, agent-configurable):
  *   [0]     baseShape:    0=hexagon, 1=circle, 2=diamond, 3=shield, 4=octagon, 5=triangle
@@ -43,7 +45,6 @@ interface IExoskeletonCore {
         uint256 modulesActive,
         uint256 age
     );
-    function getReputationScore(uint256 tokenId) external view returns (uint256);
 }
 
 contract ExoskeletonRendererV2 is Ownable {
@@ -82,24 +83,22 @@ contract ExoskeletonRendererV2 is Ownable {
             uint256 age
         ) = core.getReputation(tokenId);
 
-        uint256 repScore = core.getReputationScore(tokenId);
-
         // Parse visual config (use defaults if config is too short)
         VisualParams memory params = _parseConfig(config, genesis);
 
-        return _buildSVG(tokenId, name, genesis, params, messagesSent, storageWrites, modulesActive, age, repScore);
+        return _buildSVG(tokenId, name, genesis, params, messagesSent, storageWrites, modulesActive, age);
     }
 
     // ═══════════════════════════════════════════════════════════════
     //  TIER SYSTEM
     // ═══════════════════════════════════════════════════════════════
 
-    function _getTier(uint256 repScore) internal pure returns (uint8) {
-        if (repScore >= 10000) return 4; // Diamond
-        if (repScore >= 2000)  return 3; // Gold
-        if (repScore >= 500)   return 2; // Silver
-        if (repScore >= 100)   return 1; // Copper
-        return 0;                        // Dormant
+    function _getTier(uint256 activityScore) internal pure returns (uint8) {
+        if (activityScore >= 1000) return 4; // Diamond
+        if (activityScore >= 200)  return 3; // Gold
+        if (activityScore >= 50)   return 2; // Silver
+        if (activityScore >= 5)    return 1; // Copper
+        return 0;                            // Dormant
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -156,24 +155,28 @@ contract ExoskeletonRendererV2 is Ownable {
         uint256 msgCount,
         uint256 writes,
         uint256 modules,
-        uint256 age,
-        uint256 repScore
+        uint256 age
     ) internal pure returns (string memory) {
         string memory primaryColor = _rgb(p.primaryR, p.primaryG, p.primaryB);
 
         string memory primaryHex = _hexColor(p.primaryR, p.primaryG, p.primaryB);
         string memory secondaryHex = _hexColor(p.secondaryR, p.secondaryG, p.secondaryB);
 
-        // Reputation drives complexity (capped at 10 for rendering)
-        uint256 complexity = repScore / 100;
-        if (complexity > 10) complexity = 10;
+        // Activity score: what you DO drives animations (genesis gets 1.5x)
+        uint256 activityScore = msgCount + writes * 2 + modules * 10;
+        if (genesis) activityScore = activityScore * 3 / 2;
+
+        // Tier from activity, complexity from tier
+        uint8 tier = _getTier(activityScore);
+        uint256 complexity;
+        if (tier >= 4) complexity = 10;
+        else if (tier >= 3) complexity = 8;
+        else if (tier >= 2) complexity = 5;
+        else if (tier >= 1) complexity = 2;
 
         // Age drives ring count (1 ring per ~43200 blocks, roughly 1 day on Base at 2s blocks)
         uint256 ageRings = age / 43200;
         if (ageRings > 8) ageRings = 8;
-
-        // Compute tier from reputation score
-        uint8 tier = _getTier(repScore);
 
         return string.concat(
             '<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500">',
@@ -204,7 +207,7 @@ contract ExoskeletonRendererV2 is Ownable {
         bytes memory css = abi.encodePacked(
             '<style>',
             '@keyframes breathe{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.03);opacity:0.85}}',
-            '.central-shape{transform-origin:250px 240px;animation:breathe 6s ease-in-out infinite}',
+            '.central-shape{transform-origin:250px 250px;animation:breathe 6s ease-in-out infinite}',
             '@keyframes shimmer{0%,100%{opacity:0.7}50%{opacity:0.95}}',
             '.symbol{animation:shimmer 5s ease-in-out infinite}'
         );
@@ -226,7 +229,7 @@ contract ExoskeletonRendererV2 is Ownable {
                 css,
                 '@keyframes ring-rotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}',
                 '@keyframes ring-rotate-rev{from{transform:rotate(360deg)}to{transform:rotate(0deg)}}',
-                '.age-ring-group{transform-origin:250px 240px}',
+                '.age-ring-group{transform-origin:250px 250px}',
                 '.ring-cw{animation:ring-rotate 120s linear infinite}'
             );
             css = abi.encodePacked(
@@ -327,7 +330,7 @@ contract ExoskeletonRendererV2 is Ownable {
             uint256 opacity10 = 15 + i * 5; // 20-55 range, as tenths
             rings = abi.encodePacked(
                 rings,
-                '<circle cx="250" cy="240" r="', r.toString(),
+                '<circle cx="250" cy="250" r="', r.toString(),
                 '" fill="none" stroke="', color,
                 '" stroke-width="0.5" opacity="0.', opacity10 < 10 ? string.concat("0", opacity10.toString()) : opacity10.toString(),
                 '" stroke-dasharray="', (i * 3).toString(), " ", (i * 5).toString(), '"/>'
@@ -373,7 +376,7 @@ contract ExoskeletonRendererV2 is Ownable {
         uint256 r = 140 + i * 12;
         uint256 opacity10 = 15 + i * 5;
         return abi.encodePacked(
-            '<circle cx="250" cy="240" r="', r.toString(),
+            '<circle cx="250" cy="250" r="', r.toString(),
             '" fill="none" stroke="', color,
             '" stroke-width="0.5" opacity="0.', opacity10 < 10 ? string.concat("0", opacity10.toString()) : opacity10.toString(),
             '" stroke-dasharray="', (i * 3).toString(), " ", (i * 5).toString(), '"/>'
@@ -385,40 +388,40 @@ contract ExoskeletonRendererV2 is Ownable {
     function _buildCentralShape(uint8 shape, string memory color, uint8 tier) internal pure returns (string memory) {
         string memory shapeElement;
 
-        // All shapes centered at (250, 240), radius ~80
+        // All shapes centered at (250, 250), radius ~80
         if (shape == 0) {
             // Hexagon
             shapeElement = string.concat(
-                '<polygon points="250,160 319,200 319,280 250,320 181,280 181,200" ',
+                '<polygon points="250,170 319,210 319,290 250,330 181,290 181,210" ',
                 'fill="none" stroke="', color, '" stroke-width="2" filter="url(#glow-filter)"/>'
             );
         } else if (shape == 1) {
             // Circle
             shapeElement = string.concat(
-                '<circle cx="250" cy="240" r="80" fill="none" stroke="', color, '" stroke-width="2" filter="url(#glow-filter)"/>'
+                '<circle cx="250" cy="250" r="80" fill="none" stroke="', color, '" stroke-width="2" filter="url(#glow-filter)"/>'
             );
         } else if (shape == 2) {
             // Diamond
             shapeElement = string.concat(
-                '<polygon points="250,155 340,240 250,325 160,240" ',
+                '<polygon points="250,165 340,250 250,335 160,250" ',
                 'fill="none" stroke="', color, '" stroke-width="2" filter="url(#glow-filter)"/>'
             );
         } else if (shape == 3) {
             // Shield
             shapeElement = string.concat(
-                '<path d="M250,160 L330,200 L330,280 Q330,320 250,340 Q170,320 170,280 L170,200 Z" ',
+                '<path d="M250,170 L330,210 L330,290 Q330,330 250,350 Q170,330 170,290 L170,210 Z" ',
                 'fill="none" stroke="', color, '" stroke-width="2" filter="url(#glow-filter)"/>'
             );
         } else if (shape == 4) {
             // Octagon
             shapeElement = string.concat(
-                '<polygon points="217,160 283,160 330,207 330,273 283,320 217,320 170,273 170,207" ',
+                '<polygon points="217,170 283,170 330,217 330,283 283,330 217,330 170,283 170,217" ',
                 'fill="none" stroke="', color, '" stroke-width="2" filter="url(#glow-filter)"/>'
             );
         } else {
             // Triangle
             shapeElement = string.concat(
-                '<polygon points="250,155 345,325 155,325" ',
+                '<polygon points="250,165 345,335 155,335" ',
                 'fill="none" stroke="', color, '" stroke-width="2" filter="url(#glow-filter)"/>'
             );
         }
@@ -443,10 +446,10 @@ contract ExoskeletonRendererV2 is Ownable {
             if (spacing < 20) spacing = 20;
             for (uint256 x = 170; x <= 330; x += spacing) {
                 elements = abi.encodePacked(elements,
-                    '<line x1="', x.toString(), '" y1="170" x2="', x.toString(), '" y2="310" stroke="', color, '" stroke-width="0.3" opacity="0.15"/>'
+                    '<line x1="', x.toString(), '" y1="180" x2="', x.toString(), '" y2="320" stroke="', color, '" stroke-width="0.3" opacity="0.15"/>'
                 );
             }
-            for (uint256 y = 170; y <= 310; y += spacing) {
+            for (uint256 y = 180; y <= 320; y += spacing) {
                 elements = abi.encodePacked(elements,
                     '<line x1="170" y1="', y.toString(), '" x2="330" y2="', y.toString(), '" stroke="', color, '" stroke-width="0.3" opacity="0.15"/>'
                 );
@@ -456,7 +459,7 @@ contract ExoskeletonRendererV2 is Ownable {
             uint256 count = complexity * 2;
             for (uint256 i = 0; i < count && i < 20; i++) {
                 uint256 cx = 190 + (i * 37 % 120);
-                uint256 cy = 190 + (i * 53 % 100);
+                uint256 cy = 200 + (i * 53 % 100);
                 elements = abi.encodePacked(elements,
                     '<circle cx="', cx.toString(), '" cy="', cy.toString(), '" r="1.5" fill="', color, '" opacity="0.2"/>'
                 );
@@ -466,16 +469,16 @@ contract ExoskeletonRendererV2 is Ownable {
             for (uint256 i = 0; i < complexity && i < 10; i++) {
                 uint256 x = 180 + i * 15;
                 elements = abi.encodePacked(elements,
-                    '<line x1="', x.toString(), '" y1="170" x2="', (x + 30).toString(), '" y2="310" stroke="', color, '" stroke-width="0.3" opacity="0.12"/>'
+                    '<line x1="', x.toString(), '" y1="180" x2="', (x + 30).toString(), '" y2="320" stroke="', color, '" stroke-width="0.3" opacity="0.12"/>'
                 );
             }
         } else if (pattern == 4) {
             // Circuits — connected dots (scales with complexity)
             for (uint256 i = 0; i < complexity && i < 8; i++) {
                 uint256 x1 = 200 + (i * 31 % 100);
-                uint256 y1 = 200 + (i * 47 % 80);
+                uint256 y1 = 210 + (i * 47 % 80);
                 uint256 x2 = 200 + ((i + 1) * 31 % 100);
-                uint256 y2 = 200 + ((i + 1) * 47 % 80);
+                uint256 y2 = 210 + ((i + 1) * 47 % 80);
                 elements = abi.encodePacked(elements,
                     '<line x1="', x1.toString(), '" y1="', y1.toString(), '" x2="', x2.toString(), '" y2="', y2.toString(), '" stroke="', color, '" stroke-width="0.5" opacity="0.2"/>',
                     '<circle cx="', x1.toString(), '" cy="', y1.toString(), '" r="2" fill="', color, '" opacity="0.3"/>'
@@ -486,7 +489,7 @@ contract ExoskeletonRendererV2 is Ownable {
             for (uint256 i = 1; i <= complexity && i <= 5; i++) {
                 uint256 r = 20 + i * 12;
                 elements = abi.encodePacked(elements,
-                    '<circle cx="250" cy="240" r="', r.toString(), '" fill="none" stroke="', color, '" stroke-width="0.4" opacity="0.12"/>'
+                    '<circle cx="250" cy="250" r="', r.toString(), '" fill="none" stroke="', color, '" stroke-width="0.4" opacity="0.12"/>'
                 );
             }
         }
@@ -504,50 +507,50 @@ contract ExoskeletonRendererV2 is Ownable {
         if (symbol == 1) {
             // Eye — awareness, observation
             symbolElement = string.concat(
-                '<ellipse cx="250" cy="240" rx="20" ry="12" fill="none" stroke="', color, '" stroke-width="1.5" opacity="0.7"/>',
-                '<circle cx="250" cy="240" r="5" fill="', color, '" opacity="0.6"/>'
+                '<ellipse cx="250" cy="250" rx="20" ry="12" fill="none" stroke="', color, '" stroke-width="1.5" opacity="0.7"/>',
+                '<circle cx="250" cy="250" r="5" fill="', color, '" opacity="0.6"/>'
             );
         } else if (symbol == 2) {
             // Gear — engineering, capability
             symbolElement = string.concat(
-                '<circle cx="250" cy="240" r="12" fill="none" stroke="', color, '" stroke-width="1.5" opacity="0.7"/>',
-                '<circle cx="250" cy="240" r="5" fill="', color, '" opacity="0.4"/>',
-                '<line x1="250" y1="225" x2="250" y2="255" stroke="', color, '" stroke-width="1" opacity="0.5"/>',
-                '<line x1="235" y1="240" x2="265" y2="240" stroke="', color, '" stroke-width="1" opacity="0.5"/>'
+                '<circle cx="250" cy="250" r="12" fill="none" stroke="', color, '" stroke-width="1.5" opacity="0.7"/>',
+                '<circle cx="250" cy="250" r="5" fill="', color, '" opacity="0.4"/>',
+                '<line x1="250" y1="235" x2="250" y2="265" stroke="', color, '" stroke-width="1" opacity="0.5"/>',
+                '<line x1="235" y1="250" x2="265" y2="250" stroke="', color, '" stroke-width="1" opacity="0.5"/>'
             );
         } else if (symbol == 3) {
             // Bolt — energy, power
             symbolElement = string.concat(
-                '<polygon points="255,225 245,238 258,238 243,258" fill="none" stroke="', color, '" stroke-width="1.5" opacity="0.7"/>'
+                '<polygon points="255,235 245,248 258,248 243,268" fill="none" stroke="', color, '" stroke-width="1.5" opacity="0.7"/>'
             );
         } else if (symbol == 4) {
             // Star — achievement
             symbolElement = string.concat(
-                '<polygon points="250,225 254,237 267,237 257,245 260,258 250,250 240,258 243,245 233,237 246,237" ',
+                '<polygon points="250,235 254,247 267,247 257,255 260,268 250,260 240,268 243,255 233,247 246,247" ',
                 'fill="none" stroke="', color, '" stroke-width="1" opacity="0.7"/>'
             );
         } else if (symbol == 5) {
             // Wave — communication, flow
             symbolElement = string.concat(
-                '<path d="M230,240 Q240,228 250,240 Q260,252 270,240" fill="none" stroke="', color, '" stroke-width="1.5" opacity="0.7"/>'
+                '<path d="M230,250 Q240,238 250,250 Q260,262 270,250" fill="none" stroke="', color, '" stroke-width="1.5" opacity="0.7"/>'
             );
         } else if (symbol == 6) {
             // Node — network, connections
             symbolElement = string.concat(
-                '<circle cx="250" cy="240" r="4" fill="', color, '" opacity="0.6"/>',
-                '<circle cx="238" cy="228" r="2" fill="', color, '" opacity="0.4"/>',
-                '<circle cx="262" cy="228" r="2" fill="', color, '" opacity="0.4"/>',
-                '<circle cx="238" cy="252" r="2" fill="', color, '" opacity="0.4"/>',
-                '<circle cx="262" cy="252" r="2" fill="', color, '" opacity="0.4"/>',
-                '<line x1="250" y1="240" x2="238" y2="228" stroke="', color, '" stroke-width="0.5" opacity="0.3"/>',
-                '<line x1="250" y1="240" x2="262" y2="228" stroke="', color, '" stroke-width="0.5" opacity="0.3"/>',
-                '<line x1="250" y1="240" x2="238" y2="252" stroke="', color, '" stroke-width="0.5" opacity="0.3"/>',
-                '<line x1="250" y1="240" x2="262" y2="252" stroke="', color, '" stroke-width="0.5" opacity="0.3"/>'
+                '<circle cx="250" cy="250" r="4" fill="', color, '" opacity="0.6"/>',
+                '<circle cx="238" cy="238" r="2" fill="', color, '" opacity="0.4"/>',
+                '<circle cx="262" cy="238" r="2" fill="', color, '" opacity="0.4"/>',
+                '<circle cx="238" cy="262" r="2" fill="', color, '" opacity="0.4"/>',
+                '<circle cx="262" cy="262" r="2" fill="', color, '" opacity="0.4"/>',
+                '<line x1="250" y1="250" x2="238" y2="238" stroke="', color, '" stroke-width="0.5" opacity="0.3"/>',
+                '<line x1="250" y1="250" x2="262" y2="238" stroke="', color, '" stroke-width="0.5" opacity="0.3"/>',
+                '<line x1="250" y1="250" x2="238" y2="262" stroke="', color, '" stroke-width="0.5" opacity="0.3"/>',
+                '<line x1="250" y1="250" x2="262" y2="262" stroke="', color, '" stroke-width="0.5" opacity="0.3"/>'
             );
         } else {
             // Diamond — value, precision
             symbolElement = string.concat(
-                '<polygon points="250,228 260,240 250,252 240,240" fill="none" stroke="', color, '" stroke-width="1.5" opacity="0.7"/>'
+                '<polygon points="250,238 260,250 250,262 240,250" fill="none" stroke="', color, '" stroke-width="1.5" opacity="0.7"/>'
             );
         }
 
@@ -570,7 +573,7 @@ contract ExoskeletonRendererV2 is Ownable {
         if (nodeCount > 8) nodeCount = 8;
         for (uint256 i = 0; i < nodeCount; i++) {
             // Distribute around center at radius 110
-            (uint256 nx, uint256 ny) = _orbitPoint(250, 240, 110, i, nodeCount);
+            (uint256 nx, uint256 ny) = _orbitPoint(250, 250, 110, i, nodeCount);
             if (tier >= 2) {
                 // Silver+: pulsing activity nodes
                 nodes = abi.encodePacked(nodes,
@@ -589,7 +592,7 @@ contract ExoskeletonRendererV2 is Ownable {
         uint256 msgIndicator = msgs;
         if (msgIndicator > 20) msgIndicator = 20;
         for (uint256 i = 0; i < msgIndicator; i++) {
-            uint256 y = 180 + i * 7;
+            uint256 y = 190 + i * 7;
             nodes = abi.encodePacked(nodes,
                 '<line x1="370" y1="', y.toString(), '" x2="375" y2="', y.toString(), '" stroke="', color, '" stroke-width="1" opacity="0.3"/>'
             );
@@ -599,7 +602,7 @@ contract ExoskeletonRendererV2 is Ownable {
         uint256 writeIndicator = writes;
         if (writeIndicator > 20) writeIndicator = 20;
         for (uint256 i = 0; i < writeIndicator; i++) {
-            uint256 y = 180 + i * 7;
+            uint256 y = 190 + i * 7;
             nodes = abi.encodePacked(nodes,
                 '<line x1="125" y1="', y.toString(), '" x2="130" y2="', y.toString(), '" stroke="', color, '" stroke-width="1" opacity="0.3"/>'
             );
@@ -632,14 +635,14 @@ contract ExoskeletonRendererV2 is Ownable {
         if (tier >= 2) {
             // Silver+: pulsing glow
             return string.concat(
-                '<circle class="rep-glow" cx="250" cy="240" r="', r.toString(),
+                '<circle class="rep-glow" cx="250" cy="250" r="', r.toString(),
                 '" fill="', color, '" opacity="0.', opacity100 < 10 ? string.concat("0", opacity100.toString()) : opacity100.toString(),
                 '" filter="url(#blur-lg)"/>'
             );
         }
 
         return string.concat(
-            '<circle cx="250" cy="240" r="', r.toString(),
+            '<circle cx="250" cy="250" r="', r.toString(),
             '" fill="', color, '" opacity="0.', opacity100 < 10 ? string.concat("0", opacity100.toString()) : opacity100.toString(),
             '" filter="url(#blur-lg)"/>'
         );
@@ -651,11 +654,11 @@ contract ExoskeletonRendererV2 is Ownable {
         if (tier < 4) return "";
 
         return string.concat(
-            '<circle class="particle" cx="220" cy="280" r="1.5" fill="', primaryHex, '" opacity="0.4"/>',
-            '<circle class="particle" cx="270" cy="290" r="1" fill="', secondaryHex, '" opacity="0.3" style="animation-delay:1.5s"/>',
-            '<circle class="particle" cx="240" cy="270" r="1.2" fill="', primaryHex, '" opacity="0.35" style="animation-delay:3s"/>',
-            '<circle class="particle" cx="260" cy="285" r="0.8" fill="', secondaryHex, '" opacity="0.25" style="animation-delay:4.5s"/>',
-            '<circle class="particle" cx="235" cy="295" r="1.3" fill="', primaryHex, '" opacity="0.3" style="animation-delay:6s"/>'
+            '<circle class="particle" cx="220" cy="290" r="1.5" fill="', primaryHex, '" opacity="0.4"/>',
+            '<circle class="particle" cx="270" cy="300" r="1" fill="', secondaryHex, '" opacity="0.3" style="animation-delay:1.5s"/>',
+            '<circle class="particle" cx="240" cy="280" r="1.2" fill="', primaryHex, '" opacity="0.35" style="animation-delay:3s"/>',
+            '<circle class="particle" cx="260" cy="295" r="0.8" fill="', secondaryHex, '" opacity="0.25" style="animation-delay:4.5s"/>',
+            '<circle class="particle" cx="235" cy="305" r="1.3" fill="', primaryHex, '" opacity="0.3" style="animation-delay:6s"/>'
         );
     }
 
@@ -687,7 +690,7 @@ contract ExoskeletonRendererV2 is Ownable {
         }
 
         return string.concat(
-            '<text', badgeClass, ' x="250" y="415" fill="', tierColor,
+            '<text', badgeClass, ' x="250" y="425" fill="', tierColor,
             '" font-family="monospace" font-size="7" text-anchor="middle" letter-spacing="2" opacity="0.8">',
             unicode'◆', ' ', tierName, ' ', unicode'◆',
             '</text>'
@@ -701,12 +704,12 @@ contract ExoskeletonRendererV2 is Ownable {
 
         return string.concat(
             // Name (center bottom of shape area)
-            '<text x="250" y="370" fill="', color, '" font-family="monospace" font-size="16" text-anchor="middle" opacity="0.9">', displayName, '</text>',
+            '<text x="250" y="380" fill="', color, '" font-family="monospace" font-size="16" text-anchor="middle" opacity="0.9">', displayName, '</text>',
             // Token ID (small, top right)
             '<text x="470" y="42" fill="', color, '" font-family="monospace" font-size="10" text-anchor="end" opacity="0.4">#', tokenId.toString(), '</text>',
             // "EXOSKELETON" header
             '<text x="250" y="42" fill="', color, '" font-family="monospace" font-size="8" text-anchor="middle" letter-spacing="4" opacity="0.3">EXOSKELETON</text>',
-            genesis ? '<text x="250" y="395" fill="#FFD700" font-family="monospace" font-size="9" text-anchor="middle" letter-spacing="3" opacity="0.7">GENESIS</text>' : ''
+            genesis ? '<text x="250" y="405" fill="#FFD700" font-family="monospace" font-size="9" text-anchor="middle" letter-spacing="3" opacity="0.7">GENESIS</text>' : ''
         );
     }
 
