@@ -27,7 +27,7 @@ const MARKETPLACE_ADDRESS = "0x0E760171da676c219F46f289901D0be1CBD06188";
 
 const MODULE_CONFIG = {
   // The Solidity contract name (must match artifacts)
-  contractName: "StorageModule",
+  contractName: "ScoreModule",
 
   // Constructor args (after core address, which is auto-injected)
   // For StorageModule and ScoreModule: just [coreAddress]
@@ -36,8 +36,8 @@ const MODULE_CONFIG = {
 
   // Marketplace submission (set to null to skip marketplace registration)
   marketplace: {
-    displayName: "Storage Vault",
-    description: "Token-bound key-value storage with permissioned writers",
+    displayName: "Score Tracker",
+    description: "External score tracking - ELO, reputation, game performance",
     version: "1.0.0",
     price: 0n, // 0 = free module
   },

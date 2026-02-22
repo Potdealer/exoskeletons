@@ -3,3 +3,4 @@ cache/
 artifacts/
 types/
 .env
+xmtp/data/
