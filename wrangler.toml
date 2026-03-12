@@ -1,0 +1,4 @@
+name = "exo-router"
+main = "cloudflare-worker.js"
+compatibility_date = "2024-01-01"
+account_id = "51f3f8b54088094bb9555609cf8da36c"

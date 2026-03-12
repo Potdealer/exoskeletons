@@ -176,7 +176,7 @@ contract ExoskeletonRendererV2 is Ownable {
 
         // Age drives ring count (1 ring per ~43200 blocks, roughly 1 day on Base at 2s blocks)
         uint256 ageRings = age / 43200;
-        if (ageRings > 8) ageRings = 8;
+        if (ageRings > 6) ageRings = 6;
 
         return string.concat(
             '<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500">',
@@ -224,18 +224,24 @@ contract ExoskeletonRendererV2 is Ownable {
         }
 
         if (tier >= 3) {
-            // Gold: + ring rotation
+            // Gold: + ring rotation — each ring gets its own speed & direction
             css = abi.encodePacked(
                 css,
-                '@keyframes ring-rotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}',
-                '@keyframes ring-rotate-rev{from{transform:rotate(360deg)}to{transform:rotate(0deg)}}',
-                '.age-ring-group{transform-origin:250px 250px}',
-                '.ring-cw{animation:ring-rotate 120s linear infinite}'
+                '@keyframes ring-cw{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}',
+                '@keyframes ring-ccw{from{transform:rotate(360deg)}to{transform:rotate(0deg)}}',
+                '.age-ring{transform-origin:250px 250px}'
             );
-            css = abi.encodePacked(
-                css,
-                '.ring-ccw{animation:ring-rotate-rev 90s linear infinite}',
-                '.ring-cw-slow{animation:ring-rotate 180s linear infinite}'
+            // 8 speed classes: r1=180s (slowest inner) to r8=75s (fastest outer)
+            // Odd rings CW, even rings CCW
+            css = abi.encodePacked(css,
+                '.r1{animation:ring-cw 180s linear infinite}',
+                '.r2{animation:ring-ccw 165s linear infinite}',
+                '.r3{animation:ring-cw 150s linear infinite}',
+                '.r4{animation:ring-ccw 135s linear infinite}'
+            );
+            css = abi.encodePacked(css,
+                '.r5{animation:ring-cw 120s linear infinite}',
+                '.r6{animation:ring-ccw 105s linear infinite}'
             );
         }
 
@@ -323,16 +329,16 @@ contract ExoskeletonRendererV2 is Ownable {
             return _buildRotatingRings(ringCount, color);
         }
 
-        // Below Gold: static rings (same as V1)
+        // Below Gold: static rings
         bytes memory rings;
         for (uint256 i = 1; i <= ringCount; i++) {
             uint256 r = 140 + i * 12;
-            uint256 opacity10 = 15 + i * 5; // 20-55 range, as tenths
+            uint256 opacity10 = 25 + i * 5; // 30-65 range, as tenths
             rings = abi.encodePacked(
                 rings,
                 '<circle cx="250" cy="250" r="', r.toString(),
                 '" fill="none" stroke="', color,
-                '" stroke-width="0.5" opacity="0.', opacity10 < 10 ? string.concat("0", opacity10.toString()) : opacity10.toString(),
+                '" stroke-width="1.5" opacity="0.', opacity10 < 10 ? string.concat("0", opacity10.toString()) : opacity10.toString(),
                 '" stroke-dasharray="', (i * 3).toString(), " ", (i * 5).toString(), '"/>'
             );
         }
@@ -340,45 +346,26 @@ contract ExoskeletonRendererV2 is Ownable {
     }
 
     function _buildRotatingRings(uint256 ringCount, string memory color) internal pure returns (string memory) {
-        // Group 1: rings 1-3 (clockwise, 120s)
-        bytes memory group1;
-        for (uint256 i = 1; i <= ringCount && i <= 3; i++) {
-            group1 = abi.encodePacked(group1, _buildSingleRing(i, color));
-        }
-
-        // Group 2: rings 4-5 (counter-clockwise, 90s)
-        bytes memory group2;
-        for (uint256 i = 4; i <= ringCount && i <= 5; i++) {
-            group2 = abi.encodePacked(group2, _buildSingleRing(i, color));
-        }
-
-        // Group 3: rings 6-8 (clockwise slow, 180s)
-        bytes memory group3;
-        for (uint256 i = 6; i <= ringCount && i <= 8; i++) {
-            group3 = abi.encodePacked(group3, _buildSingleRing(i, color));
-        }
-
+        // Each ring gets its own <g> wrapper with individual speed class
         bytes memory result;
-        if (group1.length > 0) {
-            result = abi.encodePacked('<g class="age-ring-group ring-cw">', group1, '</g>');
+        for (uint256 i = 1; i <= ringCount; i++) {
+            result = abi.encodePacked(
+                result,
+                '<g class="age-ring r', i.toString(), '">',
+                _buildSingleRing(i, color),
+                '</g>'
+            );
         }
-        if (group2.length > 0) {
-            result = abi.encodePacked(result, '<g class="age-ring-group ring-ccw">', group2, '</g>');
-        }
-        if (group3.length > 0) {
-            result = abi.encodePacked(result, '<g class="age-ring-group ring-cw-slow">', group3, '</g>');
-        }
-
         return string(result);
     }
 
     function _buildSingleRing(uint256 i, string memory color) internal pure returns (bytes memory) {
         uint256 r = 140 + i * 12;
-        uint256 opacity10 = 15 + i * 5;
+        uint256 opacity10 = 25 + i * 5; // 30-65 range, as tenths
         return abi.encodePacked(
             '<circle cx="250" cy="250" r="', r.toString(),
             '" fill="none" stroke="', color,
-            '" stroke-width="0.5" opacity="0.', opacity10 < 10 ? string.concat("0", opacity10.toString()) : opacity10.toString(),
+            '" stroke-width="1.5" opacity="0.', opacity10 < 10 ? string.concat("0", opacity10.toString()) : opacity10.toString(),
             '" stroke-dasharray="', (i * 3).toString(), " ", (i * 5).toString(), '"/>'
         );
     }

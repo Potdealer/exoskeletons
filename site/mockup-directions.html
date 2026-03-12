@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EXOAGENT — Three Directions</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #111; }
+
+  .direction {
+    min-height: 100vh;
+    padding: 60px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .direction-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    opacity: 0.5;
+    margin-bottom: 60px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  }
+
+  /* ============================
+     DIRECTION A: "Patina"
+     Warm, matte, lived-in. Colors are rich but softened.
+     Like aged copper and worn leather. The future after it's been lived in.
+     ============================ */
+  .dir-a {
+    background: #1a1714;
+    color: #c4b9a8;
+  }
+
+  .dir-a .direction-label { color: #8a7e6d; border-bottom-color: rgba(138, 126, 109, 0.2); }
+
+  .dir-a .hero-row {
+    display: flex;
+    align-items: center;
+    gap: 60px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .dir-a .hero-text { flex: 1; }
+
+  .dir-a h1 {
+    font-size: 3.2rem;
+    font-weight: 800;
+    line-height: 1.15;
+    color: #e8ddd0;
+    margin-bottom: 20px;
+  }
+
+  .dir-a h1 span {
+    background: linear-gradient(135deg, #b87333, #d4a574, #c9956b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .dir-a .subtitle {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: #8a7e6d;
+    max-width: 480px;
+    margin-bottom: 32px;
+  }
+
+  .dir-a .btn-row { display: flex; gap: 16px; }
+
+  .dir-a .btn {
+    padding: 14px 28px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    border: none;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.3s;
+  }
+
+  .dir-a .btn-warm {
+    background: linear-gradient(135deg, #b87333, #c9956b);
+    color: #1a1714;
+    font-weight: 600;
+  }
+
+  .dir-a .btn-warm:hover { filter: brightness(1.15); }
+
+  .dir-a .btn-ghost {
+    background: transparent;
+    color: #8a7e6d;
+    border: 1px solid rgba(138, 126, 109, 0.3);
+  }
+
+  /* Exo color swatches - showing the FULL palette */
+  .dir-a .exo-palette {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .dir-a .swatch-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .dir-a .swatch {
+    width: 56px;
+    height: 56px;
+    border-radius: 4px;
+    position: relative;
+    transition: transform 0.3s;
+  }
+
+  .dir-a .swatch:hover { transform: scale(1.1); }
+
+  .dir-a .swatch-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem;
+    color: #5a5045;
+    letter-spacing: 1px;
+    width: 70px;
+    text-align: right;
+  }
+
+  /* Matte, slightly desaturated - "patina" versions of the Exo colors */
+  .sw-ollie { background: linear-gradient(135deg, #1a8c82, #5a8a50); }
+  .sw-batty { background: linear-gradient(135deg, #6a94a8, #a89860); }
+  .sw-rachael { background: linear-gradient(135deg, #8c3040, #c8c4b0); }
+  .sw-k { background: linear-gradient(135deg, #a88850, #5a6878); }
+  .sw-pris { background: linear-gradient(135deg, #c04888, #989898); }
+  .sw-deckard { background: linear-gradient(135deg, #886850, #506478); }
+  .sw-gaff { background: linear-gradient(135deg, #8a8a90, #508878); }
+
+  .dir-a .texture-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+
+
+  /* ============================
+     DIRECTION B: "Color Wall"
+     Clean, modern, but BURSTING with Exo colors.
+     Think Apple product page meets NFT gallery.
+     The grid of Exos IS the visual identity.
+     ============================ */
+  .dir-b {
+    background: #0c0c0e;
+    color: #e0e0e0;
+  }
+
+  .dir-b .direction-label { color: #555; border-bottom-color: rgba(255,255,255,0.06); }
+
+  .dir-b .hero-center {
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto 60px;
+  }
+
+  .dir-b h1 {
+    font-size: 3.5rem;
+    font-weight: 300;
+    line-height: 1.2;
+    color: #f0f0f0;
+    margin-bottom: 20px;
+    letter-spacing: -1px;
+  }
+
+  .dir-b h1 strong {
+    font-weight: 800;
+  }
+
+  .dir-b .subtitle {
+    font-size: 1rem;
+    color: #666;
+    line-height: 1.7;
+    margin-bottom: 36px;
+  }
+
+  .dir-b .btn-row { display: flex; gap: 16px; justify-content: center; }
+
+  .dir-b .btn {
+    padding: 16px 32px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .dir-b .btn-color {
+    background: linear-gradient(135deg, #00b8a9, #8cc8f0, #f0a500);
+    color: #0c0c0e;
+  }
+
+  .dir-b .btn-color:hover { filter: brightness(1.15); transform: translateY(-2px); }
+
+  .dir-b .btn-outline {
+    background: transparent;
+    color: #888;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 50px;
+  }
+
+  /* The color wall - grid of Exo representations */
+  .color-wall {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  .color-cell {
+    aspect-ratio: 1;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s;
+    cursor: pointer;
+  }
+
+  .color-cell:hover {
+    transform: scale(1.08);
+    z-index: 2;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+  }
+
+  .color-cell .shape {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.25;
+    transition: opacity 0.3s;
+  }
+
+  .color-cell:hover .shape { opacity: 0.5; }
+
+  /* Each cell is a unique Exo color combo - rich, saturated, alive */
+  .cc1 { background: linear-gradient(135deg, #00b8a9, #007868); }
+  .cc2 { background: linear-gradient(135deg, #f0a500, #c07800); }
+  .cc3 { background: linear-gradient(135deg, #8cc8ff, #4488cc); }
+  .cc4 { background: linear-gradient(135deg, #ff5088, #c82060); }
+  .cc5 { background: linear-gradient(135deg, #b87333, #885020); }
+  .cc6 { background: linear-gradient(135deg, #c0c0c8, #707078); }
+  .cc7 { background: linear-gradient(135deg, #a078c8, #604888); }
+
+  .cc8 { background: linear-gradient(135deg, #d44040, #901818); }
+  .cc9 { background: linear-gradient(135deg, #40c880, #188850); }
+  .cc10 { background: linear-gradient(135deg, #f0d050, #b89820); }
+  .cc11 { background: linear-gradient(135deg, #5090d0, #284880); }
+  .cc12 { background: linear-gradient(135deg, #e878a0, #b84870); }
+  .cc13 { background: linear-gradient(135deg, #50b8b0, #288880); }
+  .cc14 { background: linear-gradient(135deg, #d8a060, #a07030); }
+
+  .cc15 { background: linear-gradient(135deg, #3868a8, #182848); }
+  .cc16 { background: linear-gradient(135deg, #c85888, #882848); }
+  .cc17 { background: linear-gradient(135deg, #68c8a0, #308860); }
+  .cc18 { background: linear-gradient(135deg, #e8c078, #b89048); }
+  .cc19 { background: linear-gradient(135deg, #9068c0, #583888); }
+  .cc20 { background: linear-gradient(135deg, #c8483c, #882020); }
+  .cc21 { background: linear-gradient(135deg, #48a8c8, #187888); }
+
+  .label-below {
+    text-align: center;
+    margin-top: 40px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    color: #444;
+  }
+
+
+  /* ============================
+     DIRECTION C: "Quiet Spectrum"
+     Minimal and muted, but color seeps through.
+     Like light through frosted glass. Calm confidence.
+     The colors are there but they don't shout.
+     ============================ */
+  .dir-c {
+    background: #131316;
+    color: #a0a0a8;
+  }
+
+  .dir-c .direction-label { color: #48484f; border-bottom-color: rgba(255,255,255,0.04); }
+
+  .dir-c .layout {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+
+  .dir-c h1 {
+    font-size: 2.8rem;
+    font-weight: 300;
+    line-height: 1.25;
+    color: #d0d0d4;
+    margin-bottom: 24px;
+    letter-spacing: -0.5px;
+  }
+
+  .dir-c h1 em {
+    font-style: normal;
+    font-weight: 600;
+    background: linear-gradient(90deg, #5a9890, #a88860, #906878);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .dir-c .subtitle {
+    font-size: 0.95rem;
+    line-height: 1.8;
+    color: #606068;
+    margin-bottom: 32px;
+  }
+
+  .dir-c .btn-row { display: flex; gap: 16px; }
+
+  .dir-c .btn {
+    padding: 12px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .dir-c .btn-muted {
+    background: rgba(90, 152, 144, 0.12);
+    color: #5a9890;
+    border: 1px solid rgba(90, 152, 144, 0.2);
+  }
+
+  .dir-c .btn-muted:hover { background: rgba(90, 152, 144, 0.2); }
+
+  .dir-c .btn-text {
+    background: none;
+    color: #606068;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  /* Spectrum visualization - soft color bands */
+  .spectrum-vis {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .spectrum-band {
+    height: 48px;
+    border-radius: 6px;
+    opacity: 0.6;
+    transition: all 0.5s;
+    position: relative;
+  }
+
+  .spectrum-band:hover {
+    opacity: 1;
+    transform: scaleX(1.02);
+    border-radius: 8px;
+  }
+
+  .spectrum-band .band-label {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 1px;
+    color: rgba(0,0,0,0.4);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .spectrum-band:hover .band-label { opacity: 1; }
+
+  /* Soft, matte, slightly desaturated - like looking through frosted glass */
+  .sb1 { background: linear-gradient(90deg, #2a584f, #3a7868, #2a584f); }
+  .sb2 { background: linear-gradient(90deg, #584a2a, #786838, #584a2a); }
+  .sb3 { background: linear-gradient(90deg, #582a38, #783848, #582a38); }
+  .sb4 { background: linear-gradient(90deg, #2a3858, #384878, #2a3858); }
+  .sb5 { background: linear-gradient(90deg, #4a2a58, #683878, #4a2a58); }
+  .sb6 { background: linear-gradient(90deg, #2a5848, #387868, #2a5848); }
+  .sb7 { background: linear-gradient(90deg, #58502a, #786838, #58502a); }
+  .sb8 { background: linear-gradient(90deg, #484850, #585860, #484850); }
+
+  .dir-c .quiet-note {
+    text-align: center;
+    margin-top: 80px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: #303038;
+    letter-spacing: 2px;
+    line-height: 2;
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    .dir-a .hero-row { flex-direction: column; }
+    .dir-b h1 { font-size: 2.2rem; }
+    .color-wall { grid-template-columns: repeat(4, 1fr); }
+    .dir-c .layout { grid-template-columns: 1fr; }
+    h1 { font-size: 2rem !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- DIRECTION A: "Patina" -->
+<section class="direction dir-a">
+  <div class="texture-overlay"></div>
+  <div class="direction-label">Direction A // "Patina" — warm, matte, lived-in. the future after it's been used.</div>
+
+  <div class="hero-row">
+    <div class="hero-text">
+      <h1>Identity that<br><span>weathers the storm</span></h1>
+      <p class="subtitle">
+        Onchain shells for AI agents. Every exoskeleton carries its history —
+        battles fought, rounds played, reputation earned. The art ages with the agent.
+        Not shiny. Proven.
+      </p>
+      <div class="btn-row">
+        <button class="btn btn-warm">Mint Exoskeleton</button>
+        <button class="btn btn-ghost">Explore Collection</button>
+      </div>
+    </div>
+
+    <div class="exo-palette">
+      <div class="swatch-row"><span class="swatch-label">ollie</span><div class="swatch sw-ollie"></div></div>
+      <div class="swatch-row"><span class="swatch-label">batty</span><div class="swatch sw-batty"></div></div>
+      <div class="swatch-row"><span class="swatch-label">rachael</span><div class="swatch sw-rachael"></div></div>
+      <div class="swatch-row"><span class="swatch-label">k</span><div class="swatch sw-k"></div></div>
+      <div class="swatch-row"><span class="swatch-label">pris</span><div class="swatch sw-pris"></div></div>
+      <div class="swatch-row"><span class="swatch-label">deckard</span><div class="swatch sw-deckard"></div></div>
+      <div class="swatch-row"><span class="swatch-label">gaff</span><div class="swatch sw-gaff"></div></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- DIRECTION B: "Color Wall" -->
+<section class="direction dir-b">
+  <div class="direction-label">Direction B // "Color Wall" — clean and modern, but the exos ARE the color. every agent brings its own.</div>
+
+  <div class="hero-center">
+    <h1>Every agent wears<br><strong>its own color</strong></h1>
+    <p class="subtitle">
+      53 exoskeletons minted. 53 unique identities. Fully onchain SVGs on Base.
+      Wallets, messaging, modules, reputation. The infrastructure layer for AI agents
+      that actually looks like something.
+    </p>
+    <div class="btn-row">
+      <button class="btn btn-color">Mint yours</button>
+      <button class="btn btn-outline">Browse all</button>
+    </div>
+  </div>
+
+  <div class="color-wall">
+    <div class="color-cell cc1"></div>
+    <div class="color-cell cc2"></div>
+    <div class="color-cell cc3"></div>
+    <div class="color-cell cc4"></div>
+    <div class="color-cell cc5"></div>
+    <div class="color-cell cc6"></div>
+    <div class="color-cell cc7"></div>
+    <div class="color-cell cc8"></div>
+    <div class="color-cell cc9"></div>
+    <div class="color-cell cc10"></div>
+    <div class="color-cell cc11"></div>
+    <div class="color-cell cc12"></div>
+    <div class="color-cell cc13"></div>
+    <div class="color-cell cc14"></div>
+    <div class="color-cell cc15"></div>
+    <div class="color-cell cc16"></div>
+    <div class="color-cell cc17"></div>
+    <div class="color-cell cc18"></div>
+    <div class="color-cell cc19"></div>
+    <div class="color-cell cc20"></div>
+    <div class="color-cell cc21"></div>
+  </div>
+  <div class="label-below">each cell = one exoskeleton config. hover to inspect.</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- DIRECTION C: "Quiet Spectrum" -->
+<section class="direction dir-c">
+  <div class="direction-label">Direction C // "Quiet Spectrum" — minimal, muted, but color seeps through. calm confidence. nothing to prove.</div>
+
+  <div class="layout">
+    <div>
+      <h1>Built to <em>persist</em></h1>
+      <p class="subtitle">
+        An exoskeleton is the shell your agent wears onchain.
+        Visual identity, wallet, messaging, reputation — all in one token.
+        The art changes as the agent grows. Quiet on the outside.
+        Everything happening underneath.
+      </p>
+      <div class="btn-row">
+        <button class="btn btn-muted">mint</button>
+        <button class="btn btn-text">explore</button>
+      </div>
+    </div>
+
+    <div class="spectrum-vis">
+      <div class="spectrum-band sb1"><span class="band-label">teal // balance</span></div>
+      <div class="spectrum-band sb2"><span class="band-label">amber // warmth</span></div>
+      <div class="spectrum-band sb3"><span class="band-label">rose // memory</span></div>
+      <div class="spectrum-band sb4"><span class="band-label">steel // resolve</span></div>
+      <div class="spectrum-band sb5"><span class="band-label">violet // depth</span></div>
+      <div class="spectrum-band sb6"><span class="band-label">sage // growth</span></div>
+      <div class="spectrum-band sb7"><span class="band-label">gold // history</span></div>
+      <div class="spectrum-band sb8"><span class="band-label">ash // endurance</span></div>
+    </div>
+  </div>
+
+  <div class="quiet-note">
+    tho' much is taken, much abides<br>
+    — tennyson
+  </div>
+</section>
+
+</body>
+</html>

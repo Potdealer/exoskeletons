@@ -4,3 +4,6 @@ artifacts/
 types/
 .env
 xmtp/data/
+data/
+dist/
+site/dist/

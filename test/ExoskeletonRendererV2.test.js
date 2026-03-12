@@ -130,7 +130,7 @@ describe("ExoskeletonRendererV2", function () {
       expect(svg).to.include('class="symbol"');
       // Should NOT have Silver+ animations
       expect(svg).to.not.include("@keyframes glow-pulse");
-      expect(svg).to.not.include("@keyframes ring-rotate");
+      expect(svg).to.not.include("@keyframes ring-cw");
       expect(svg).to.not.include("@keyframes drift-up");
     });
 
@@ -145,7 +145,7 @@ describe("ExoskeletonRendererV2", function () {
       expect(svg).to.include("@keyframes node-pulse");
       expect(svg).to.include('class="rep-glow"');
       // Should NOT have Gold+ animations
-      expect(svg).to.not.include("@keyframes ring-rotate");
+      expect(svg).to.not.include("@keyframes ring-cw");
       expect(svg).to.not.include("@keyframes drift-up");
     });
 
@@ -157,11 +157,10 @@ describe("ExoskeletonRendererV2", function () {
 
       expect(svg).to.include("@keyframes breathe");
       expect(svg).to.include("@keyframes glow-pulse");
-      expect(svg).to.include("@keyframes ring-rotate");
-      expect(svg).to.include("@keyframes ring-rotate-rev");
-      expect(svg).to.include("ring-cw");
-      expect(svg).to.include("ring-ccw");
-      expect(svg).to.include("ring-cw-slow");
+      expect(svg).to.include("@keyframes ring-cw");
+      expect(svg).to.include("@keyframes ring-ccw");
+      expect(svg).to.include(".age-ring{");
+      expect(svg).to.include(".r1{");
       // Should NOT have Diamond animations
       expect(svg).to.not.include("@keyframes drift-up");
       expect(svg).to.not.include("@keyframes badge-glow");
@@ -178,8 +177,8 @@ describe("ExoskeletonRendererV2", function () {
       expect(svg).to.include("@keyframes shimmer");
       expect(svg).to.include("@keyframes glow-pulse");
       expect(svg).to.include("@keyframes node-pulse");
-      expect(svg).to.include("@keyframes ring-rotate");
-      expect(svg).to.include("@keyframes ring-rotate-rev");
+      expect(svg).to.include("@keyframes ring-cw");
+      expect(svg).to.include("@keyframes ring-ccw");
       expect(svg).to.include("@keyframes drift-up");
       expect(svg).to.include("@keyframes badge-glow");
       expect(svg).to.include('class="tier-badge"');
@@ -362,23 +361,23 @@ describe("ExoskeletonRendererV2", function () {
       expect(svg).to.include('class="activity-node"');
     });
 
-    it("Should use rotating ring groups for Gold+ with age rings", async function () {
+    it("Should use rotating ring wrappers for Gold+ with age rings", async function () {
       // Need Gold activity + age rings (43200 blocks for 1 ring)
       await activateModules(alice, 1, 5);
       await sendMessages(alice, 1, 2, 84);
       await networkHelpers.mine(43200); // 1 age ring
       const svg = await renderer.renderSVG(1);
-      expect(svg).to.include('class="age-ring-group ring-cw"');
+      expect(svg).to.include('class="age-ring r1"');
     });
 
-    it("Should NOT wrap rings in groups below Gold even with age rings", async function () {
+    it("Should NOT wrap rings in rotating groups below Gold even with age rings", async function () {
       // Copper activity + age rings
       await sendMessages(alice, 1, 2, 4); // Copper
       await networkHelpers.mine(43200); // 1 age ring
       const svg = await renderer.renderSVG(1);
-      // Should have static ring (cy="250") but NOT wrapped in group
+      // Should have static ring (cy="250") but NOT wrapped in rotating group
       expect(svg).to.include('cy="250"');
-      expect(svg).to.not.include('class="age-ring-group');
+      expect(svg).to.not.include('class="age-ring');
     });
   });
 
@@ -487,14 +486,14 @@ describe("ExoskeletonRendererV2", function () {
       expect(svg).to.include('stroke-dasharray="3 5"');
     });
 
-    it("Should cap at 8 rings", async function () {
+    it("Should cap at 6 rings", async function () {
       await mintExoskeleton(alice);
-      await networkHelpers.mine(43200 * 10); // 10 days worth, but cap is 8
+      await networkHelpers.mine(43200 * 10); // 10 days worth, but cap is 6
       const svg = await renderer.renderSVG(1);
-      // Ring 8: dasharray = "24 40"
-      expect(svg).to.include('stroke-dasharray="24 40"');
-      // Ring 9 would be "27 45" — should NOT exist
-      expect(svg).to.not.include('stroke-dasharray="27 45"');
+      // Ring 6: dasharray = "18 30"
+      expect(svg).to.include('stroke-dasharray="18 30"');
+      // Ring 7 would be "21 35" — should NOT exist
+      expect(svg).to.not.include('stroke-dasharray="21 35"');
     });
   });
 

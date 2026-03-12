@@ -1,10 +1,191 @@
 /**
- * exoagent.xyz — Cloudflare Worker
+ * exoagent.xyz + exohost.xyz — Cloudflare Worker
  * Routes to storedon.net (Net Protocol) pages
- * Serves: Exoskeletons site + OK Fight Club
+ * Serves: Exoskeletons site + OK Fight Club + ExoHost named sites
  * Includes OG meta tags for social previews
  */
 
+// ─── ExoHost Configuration ──────────────────────────────────
+const EXOHOST_REGISTRY = '0x71329A553e4134dE482725f98e10A4cBd90751f7';
+const EXOHOST_DOMAIN = 'exohost.xyz';
+const BASE_RPC = 'https://mainnet.base.org';
+const STOREDON_BASE = 'https://storedon.net/net/8453/storage/load';
+
+// ABI-encoded function selectors
+const RESOLVE_SELECTOR = '0xc2b12a73';      // resolve(string)
+const RESOLVE_PAGE_SELECTOR = '0x8db3887d'; // resolvePage(string,string)
+
+/**
+ * Encode a string for ABI call
+ */
+function abiEncodeString(str) {
+  const hex = Array.from(new TextEncoder().encode(str))
+    .map(b => b.toString(16).padStart(2, '0')).join('');
+  const len = str.length.toString(16).padStart(64, '0');
+  const padded = hex.padEnd(Math.ceil(hex.length / 64) * 64, '0');
+  return len + padded;
+}
+
+/**
+ * Encode resolve(string name) calldata
+ */
+function encodeResolve(name) {
+  // Function selector + offset to string data (0x20)
+  const offset = '0000000000000000000000000000000000000000000000000000000000000020';
+  return RESOLVE_SELECTOR + offset + abiEncodeString(name);
+}
+
+/**
+ * Encode resolvePage(string name, string route) calldata
+ */
+function encodeResolvePage(name, route) {
+  // Two dynamic params: offset1 (name), offset2 (route)
+  // offset1 = 0x40 (64 bytes), offset2 = 0x40 + 32 + ceil(nameLen/32)*32
+  const nameHex = abiEncodeString(name);
+  const nameSlots = nameHex.length / 2; // bytes
+  const offset1 = '0000000000000000000000000000000000000000000000000000000000000040';
+  const offset2Num = 64 + nameSlots;
+  const offset2 = offset2Num.toString(16).padStart(64, '0');
+  return RESOLVE_PAGE_SELECTOR + offset1 + offset2 + nameHex + abiEncodeString(route);
+}
+
+/**
+ * Call a contract view function via eth_call
+ */
+async function ethCall(to, data) {
+  const res = await fetch(BASE_RPC, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0', id: 1, method: 'eth_call',
+      params: [{ to, data }, 'latest']
+    })
+  });
+  const json = await res.json();
+  return json.result;
+}
+
+/**
+ * Decode resolve() response: (address owner, address storageWallet, string homepageKey)
+ */
+function decodeResolve(result) {
+  if (!result || result === '0x' || result.length < 130) return null;
+  const data = result.slice(2);
+  const owner = '0x' + data.slice(24, 64);
+  const wallet = '0x' + data.slice(88, 128);
+  // String offset at position 128-192
+  const strOffset = parseInt(data.slice(128, 192), 16) * 2;
+  const strLen = parseInt(data.slice(strOffset, strOffset + 64), 16);
+  const strHex = data.slice(strOffset + 64, strOffset + 64 + strLen * 2);
+  const key = new TextDecoder().decode(new Uint8Array(
+    strHex.match(/.{2}/g).map(b => parseInt(b, 16))
+  ));
+  // Check if owner is zero address
+  if (owner === '0x0000000000000000000000000000000000000000') return null;
+  return { owner, wallet, key };
+}
+
+/**
+ * Decode resolvePage() response: (address storageWallet, string key)
+ */
+function decodeResolvePage(result) {
+  if (!result || result === '0x' || result.length < 130) return null;
+  const data = result.slice(2);
+  const wallet = '0x' + data.slice(24, 64);
+  const strOffset = parseInt(data.slice(64, 128), 16) * 2;
+  const strLen = parseInt(data.slice(strOffset, strOffset + 64), 16);
+  if (strLen === 0) return { wallet, key: '' };
+  const strHex = data.slice(strOffset + 64, strOffset + 64 + strLen * 2);
+  const key = new TextDecoder().decode(new Uint8Array(
+    strHex.match(/.{2}/g).map(b => parseInt(b, 16))
+  ));
+  if (wallet === '0x0000000000000000000000000000000000000000') return null;
+  return { wallet, key };
+}
+
+/**
+ * Handle ExoHost subdomain requests: {name}.exohost.xyz
+ */
+async function handleExoHost(request) {
+  const url = new URL(request.url);
+  const host = url.hostname;
+
+  // Extract subdomain name
+  const parts = host.split('.');
+  if (parts.length < 3) return null; // bare exohost.xyz — show landing page later
+  const name = parts.slice(0, parts.length - 2).join('.');
+
+  // Skip www
+  if (name === 'www') return null;
+
+  let path = url.pathname.replace(/\/+$/, '').replace(/^\//, '') || '';
+  path = path.replace(/\.html$/, '');
+
+  let wallet, storageKey;
+
+  if (path && path !== 'index') {
+    // Try to resolve specific page
+    const pageResult = await ethCall(EXOHOST_REGISTRY, encodeResolvePage(name, path));
+    const page = decodeResolvePage(pageResult);
+    if (page && page.key) {
+      wallet = page.wallet;
+      storageKey = page.key;
+    } else {
+      // No specific page route — try using name-path convention
+      const resolveResult = await ethCall(EXOHOST_REGISTRY, encodeResolve(name));
+      const site = decodeResolve(resolveResult);
+      if (!site) return exohostNotFound(name);
+      wallet = site.wallet;
+      storageKey = `${site.key}-${path}`; // Convention: homepage-key + "-" + path
+    }
+  } else {
+    // Homepage
+    const resolveResult = await ethCall(EXOHOST_REGISTRY, encodeResolve(name));
+    const site = decodeResolve(resolveResult);
+    if (!site) return exohostNotFound(name);
+    wallet = site.wallet;
+    storageKey = site.key;
+  }
+
+  // Fetch from Net Protocol storage
+  const storeUrl = `${STOREDON_BASE}/${wallet}/${storageKey}`;
+  const response = await fetch(storeUrl);
+
+  if (!response.ok) {
+    return new Response(`<html><body style="background:#111;color:#0f0;font-family:monospace;padding:2em">
+      <h1>${name}.exohost.xyz</h1>
+      <p>Name registered but page not found.</p>
+      <p>Storage key: ${storageKey}</p>
+      <p>Upload your site with: <code>npx netp storage store --key "${storageKey}" --file index.html --chain-id 8453</code></p>
+    </body></html>`, {
+      status: 404,
+      headers: { 'Content-Type': 'text/html; charset=utf-8' }
+    });
+  }
+
+  const html = await response.text();
+  return new Response(html, {
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'public, max-age=300',
+      'X-Content-Type-Options': 'nosniff',
+      'X-Powered-By': 'ExoHost — onchain hosting on Base',
+    },
+  });
+}
+
+function exohostNotFound(name) {
+  return new Response(`<html><body style="background:#111;color:#0f0;font-family:monospace;padding:2em">
+    <h1>${name}.exohost.xyz</h1>
+    <p>This name is not registered.</p>
+    <p>Register it onchain: ExoHostRegistry @ ${EXOHOST_REGISTRY}</p>
+  </body></html>`, {
+    status: 404,
+    headers: { 'Content-Type': 'text/html; charset=utf-8' }
+  });
+}
+
+// ─── exoagent.xyz Configuration ─────────────────────────────
 const OPERATOR = '0x2460F6C6CA04DD6a73E9B5535aC67Ac48726c09b';
 const BASE = `https://storedon.net/net/8453/storage/load/${OPERATOR}`;
 
@@ -32,7 +213,9 @@ const ROUTES = {
   // OK Fight Club
   '/okfc':           'okfc-game',
   // CC0mon Battle
-  '/cc0mon':         'cc0mon',
+  '/cc0mon':         'cc0mon19',
+  '/cc0mon-test':    'cc0mon19',
+  '/cc0mon-guide':   'cc0mon-guide',
 };
 
 // OG images (base64-encoded PNG, served at /og/ paths)
@@ -168,6 +351,13 @@ function injectOgTags(html, path, url) {
 export default {
   async fetch(request) {
     const url = new URL(request.url);
+
+    // ─── ExoHost: serve {name}.exohost.xyz ───
+    if (url.hostname.endsWith(EXOHOST_DOMAIN) && url.hostname !== EXOHOST_DOMAIN && url.hostname !== `www.${EXOHOST_DOMAIN}`) {
+      const exoResponse = await handleExoHost(request);
+      if (exoResponse) return exoResponse;
+    }
+
     let path = url.pathname.replace(/\/+$/, '') || '/';
 
     // Serve OG images

@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EXOSKELETONS — Module Marketplace</title>
+<meta name="description" content="Browse, build, and earn. The Exoskeleton Module Marketplace — 95.80% to builders, 4.20% platform fee.">
+<link rel="stylesheet" href="shared/exo-style.css">
+</head>
+<body>
+
+<div id="app-nav"></div>
+
+<!-- Hero -->
+<div class="hero" style="padding:40px 24px 32px">
+  <h1 class="hero__title" style="font-size:32px;letter-spacing:4px">MODULE MARKETPLACE</h1>
+  <p class="hero__subtitle" style="font-size:15px;margin-bottom:0">Build. Submit. Earn. <span style="color:var(--gold)">95.80%</span> to builders, <span style="color:var(--gold)">4.20%</span> platform.</p>
+</div>
+
+<main class="container container--medium" style="padding-bottom:60px">
+
+<!-- Marketplace Stats -->
+<div class="panel">
+  <div class="panel__title">Marketplace Stats</div>
+  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="stat-box"><div class="stat-box__value" id="sApproved">--</div><div class="stat-box__label">Approved Modules</div></div>
+    <div class="stat-box"><div class="stat-box__value" id="sActivations">--</div><div class="stat-box__label">Total Activations</div></div>
+    <div class="stat-box"><div class="stat-box__value" id="sRevenue">--</div><div class="stat-box__label">Builder Revenue</div></div>
+    <div class="stat-box"><div class="stat-box__value" style="font-size:24px">4.20%</div><div class="stat-box__label">Platform Fee</div></div>
+  </div>
+</div>
+
+<!-- Browse Modules -->
+<div class="panel">
+  <div class="panel__title">Browse Modules</div>
+
+  <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px">
+    <div style="display:flex;gap:4px">
+      <button class="btn btn--ghost btn--sm filter-btn filter-btn--active" data-filter="all" onclick="setFilter('all')">All</button>
+      <button class="btn btn--ghost btn--sm filter-btn" data-filter="free" onclick="setFilter('free')">Free</button>
+      <button class="btn btn--ghost btn--sm filter-btn" data-filter="premium" onclick="setFilter('premium')">Premium</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span class="text-mono" style="font-size:11px;color:var(--text-tertiary);letter-spacing:1px">SORT</span>
+      <select class="form-select" id="sortModules" onchange="renderModules()" style="padding:6px 10px;font-size:12px">
+        <option value="newest">Newest</option>
+        <option value="active">Most Active</option>
+        <option value="price-low">Price: Low → High</option>
+        <option value="price-high">Price: High → Low</option>
+      </select>
+    </div>
+    <div style="flex:1"></div>
+    <span class="text-mono" style="font-size:12px;color:var(--text-secondary)" id="modCountLabel">Loading...</span>
+  </div>
+
+  <div id="moduleGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
+    <div class="skeleton" style="height:180px;border-radius:var(--radius-md)"></div>
+    <div class="skeleton" style="height:180px;border-radius:var(--radius-md)"></div>
+  </div>
+</div>
+
+<!-- Builder Hub -->
+<div class="panel">
+  <div class="panel__title">Builder Hub</div>
+  <div id="builderHub">
+    <div style="text-align:center;color:var(--text-secondary);padding:16px">
+      <button class="btn btn--secondary btn--sm" onclick="connectAndLoad()">Connect Wallet</button>
+      <span style="margin-left:8px;font-size:13px">to register as a builder or manage modules</span>
+    </div>
+  </div>
+</div>
+
+<!-- My Exoskeletons — Activate/Deactivate -->
+<div class="panel hidden" id="myExoPanel">
+  <div class="panel__title">Activate on My Exoskeletons</div>
+  <div id="myExoList"></div>
+</div>
+
+<!-- How It Works -->
+<div class="panel">
+  <details>
+    <summary>How It Works</summary>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+      <div style="padding:16px;background:var(--bg-primary);border-radius:var(--radius-md);border-left:3px solid var(--cyan)">
+        <h4 style="color:var(--cyan);margin-bottom:8px;font-size:14px">For Builders</h4>
+        <ol style="padding-left:20px;margin:0;font-size:13px;color:var(--text-secondary);line-height:1.8">
+          <li>Register as a builder (free)</li>
+          <li>Submit a module (0.001 ETH listing fee)</li>
+          <li>Wait for approval</li>
+          <li>Earn <strong style="color:var(--gold)">95.80%</strong> of every activation</li>
+        </ol>
+      </div>
+      <div style="padding:16px;background:var(--bg-primary);border-radius:var(--radius-md);border-left:3px solid var(--green)">
+        <h4 style="color:var(--green);margin-bottom:8px;font-size:14px">For Holders</h4>
+        <ol style="padding-left:20px;margin:0;font-size:13px;color:var(--text-secondary);line-height:1.8">
+          <li>Browse available modules</li>
+          <li>Pick a module you want</li>
+          <li>Activate on your Exoskeleton</li>
+          <li>Module active — visible in your profile</li>
+        </ol>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;padding:12px 16px;background:rgba(255,215,0,0.04);border:1px solid rgba(255,215,0,0.15);border-radius:var(--radius-md);font-size:13px;color:var(--text-secondary)">
+      <strong style="color:var(--gold)">Fees:</strong> 0.001 ETH listing fee per module submission. 4.20% platform fee on paid activations. Free modules have no activation cost.
+    </div>
+
+    <p style="margin-top:12px;font-size:13px;color:var(--text-tertiary)">
+      Contract: <a href="https://basescan.org/address/0x0E760171da676c219F46f289901D0be1CBD06188" target="_blank">0x0E76...0188</a> ·
+      <a href="docs.html">Full Docs</a> ·
+      <a href="https://github.com/Potdealer/exoskeletons" target="_blank">GitHub</a>
+    </p>
+  </details>
+</div>
+
+</main>
+
+<div id="app-footer"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"></script>
+<script src="shared/exo-core.js"></script>
+<script src="shared/exo-ui.js"></script>
+<script>
+ExoUI.initPage('marketplace.html');
+
+// ── State ──
+let allModules = [];
+let currentFilter = 'all';
+const STATUS_LABELS = ['NONE', 'PENDING', 'APPROVED', 'REJECTED', 'DELISTED'];
+const STATUS_BADGE = ['badge--dim', 'badge--gold', 'badge--green', 'badge--red', 'badge--dim'];
+
+// ── Load Stats ──
+async function loadStats() {
+  try {
+    const stats = await ExoCore.loadMarketplaceStats();
+    document.getElementById('sApproved').textContent = stats.totalApproved;
+    document.getElementById('sActivations').textContent = stats.totalActivations;
+    // Builder revenue = total platform revenue / 0.042 * 0.958 — but we can approximate from
+    // totalPlatformRevenue / 420 * 9580 or just show total volume minus platform
+    // Simpler: platform takes 4.20%, so builder rev = platformRev / 0.042 * 0.958
+    // Or: totalRevenue = platformRev / 0.042, builderRev = totalRevenue - platformRev
+    const platformRevWei = stats.totalPlatformRevenue;
+    if (platformRevWei > 0n) {
+      const totalRev = platformRevWei * 10000n / 420n;
+      const builderRev = totalRev - platformRevWei;
+      document.getElementById('sRevenue').textContent = parseFloat(ethers.formatEther(builderRev)).toFixed(4) + ' ETH';
+    } else {
+      document.getElementById('sRevenue').textContent = '0 ETH';
+    }
+  } catch (e) {
+    console.error('Stats error:', e);
+  }
+}
+
+// ── Load Modules ──
+async function loadModules() {
+  try {
+    allModules = await ExoCore.loadAllMarketplaceModules();
+    renderModules();
+  } catch (e) {
+    console.error('Module load error:', e);
+    document.getElementById('moduleGrid').innerHTML = '<div class="error-text" style="grid-column:1/-1">Failed to load modules: ' + ExoCore.escHtml(e.message) + '</div>';
+  }
+}
+
+function getFilteredModules() {
+  let mods = allModules.filter(m => m.status === 2); // APPROVED only in browse
+  if (currentFilter === 'free') mods = mods.filter(m => m.price === 0n);
+  if (currentFilter === 'premium') mods = mods.filter(m => m.price > 0n);
+
+  const sort = document.getElementById('sortModules').value;
+  if (sort === 'newest') mods.sort((a, b) => b.approvedAt - a.approvedAt);
+  else if (sort === 'active') mods.sort((a, b) => b.activations - a.activations);
+  else if (sort === 'price-low') mods.sort((a, b) => Number(a.price - b.price));
+  else if (sort === 'price-high') mods.sort((a, b) => Number(b.price - a.price));
+
+  return mods;
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.toggle('filter-btn--active', btn.dataset.filter === f);
+  });
+  renderModules();
+}
+
+function renderModules() {
+  const mods = getFilteredModules();
+  document.getElementById('modCountLabel').textContent = mods.length + ' module' + (mods.length !== 1 ? 's' : '');
+  const grid = document.getElementById('moduleGrid');
+
+  if (mods.length === 0) {
+    grid.innerHTML = '<div class="loading-text" style="grid-column:1/-1">No modules found. Be the first to submit one!</div>';
+    return;
+  }
+
+  grid.innerHTML = mods.map(mod => {
+    const isFree = mod.price === 0n;
+    const priceLabel = isFree
+      ? '<span class="badge badge--green">Free</span>'
+      : '<span class="badge badge--gold">' + parseFloat(ethers.formatEther(mod.price)).toFixed(4) + ' ETH</span>';
+    const desc = mod.description.length > 100 ? mod.description.slice(0, 100) + '...' : mod.description;
+    return `
+      <div class="module-card" style="background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+          <div style="font-size:15px;font-weight:600">${ExoCore.escHtml(mod.name)}</div>
+          <span class="badge badge--dim" style="font-size:9px">${ExoCore.escHtml(mod.version)}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px">by <span style="color:var(--text-secondary)">${ExoCore.truncAddr(mod.builder)}</span></div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;min-height:40px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${ExoCore.escHtml(desc)}</div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          ${priceLabel}
+          <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary)">${mod.activations} activation${mod.activations !== 1 ? 's' : ''}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Wallet Connect ──
+async function connectAndLoad() {
+  try {
+    await ExoCore.connectWallet();
+  } catch (e) {
+    console.error('Connect error:', e);
+  }
+}
+
+// ── Builder Hub ──
+async function loadBuilderHub() {
+  const account = ExoCore.account;
+  if (!account) {
+    document.getElementById('builderHub').innerHTML = `
+      <div style="text-align:center;color:var(--text-secondary);padding:16px">
+        <button class="btn btn--secondary btn--sm" onclick="connectAndLoad()">Connect Wallet</button>
+        <span style="margin-left:8px;font-size:13px">to register as a builder or manage modules</span>
+      </div>`;
+    return;
+  }
+
+  try {
+    const builder = await ExoCore.loadBuilderProfile(account);
+
+    if (!builder.registered) {
+      document.getElementById('builderHub').innerHTML = `
+        <div style="max-width:480px;margin:0 auto">
+          <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px">Register as a builder to submit modules to the marketplace.</p>
+          <div class="form-row">
+            <label class="form-row__label">Name</label>
+            <input type="text" class="form-input" id="builderName" maxlength="64" placeholder="Your builder name">
+          </div>
+          <div class="form-row" style="align-items:flex-start">
+            <label class="form-row__label" style="margin-top:10px">Bio</label>
+            <textarea class="form-textarea" id="builderBio" maxlength="512" placeholder="What do you build?" style="min-height:60px"></textarea>
+          </div>
+          <button class="btn btn--primary btn--full" onclick="doRegisterBuilder()">Register as Builder</button>
+          <div id="builderStatus" style="display:none"></div>
+        </div>`;
+      return;
+    }
+
+    // Registered builder — show dashboard
+    const myMods = await ExoCore.withFallback(() => ExoCore.contracts.marketplace.getBuilderModules(account));
+    let modsHtml = '';
+    if (myMods.length > 0) {
+      const modDetails = await Promise.all(myMods.map(async hash => {
+        try {
+          const m = await ExoCore.contracts.marketplace.getModule(hash);
+          return { nameHash: hash, name: m.name, status: Number(m.status), price: m.price, activations: Number(m.moduleActivations), version: m.version, description: m.description };
+        } catch (e) { return null; }
+      }));
+
+      modsHtml = modDetails.filter(Boolean).map(m => `
+        <div style="padding:12px;background:var(--bg-primary);border-radius:var(--radius-sm);border:1px solid var(--border);margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-weight:600;font-size:14px">${ExoCore.escHtml(m.name)}</span>
+            <span class="badge ${STATUS_BADGE[m.status]}">${STATUS_LABELS[m.status]}</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px">
+            ${m.price === 0n ? 'Free' : parseFloat(ethers.formatEther(m.price)).toFixed(4) + ' ETH'} · ${m.activations} activations · v${ExoCore.escHtml(m.version)}
+          </div>
+          ${m.status === 2 ? `
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button class="btn btn--ghost btn--sm" onclick="doUpdatePrice('${m.nameHash}')">Update Price</button>
+              <button class="btn btn--ghost btn--sm" onclick="doUpdateDesc('${m.nameHash}')">Update Desc</button>
+              <button class="btn btn--ghost btn--sm" onclick="doUpdateVersion('${m.nameHash}')">Update Version</button>
+              <button class="btn btn--ghost btn--sm" style="color:var(--red)" onclick="doDelist('${m.nameHash}')">Delist</button>
+            </div>` : ''}
+        </div>`).join('');
+    }
+
+    document.getElementById('builderHub').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
+        <div style="padding:12px;background:var(--bg-primary);border-radius:var(--radius-sm);text-align:center">
+          <div style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--text-primary)">${ExoCore.escHtml(builder.name)}</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);letter-spacing:1px;margin-top:4px">BUILDER</div>
+        </div>
+        <div style="padding:12px;background:var(--bg-primary);border-radius:var(--radius-sm);text-align:center">
+          <div style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--gold)">${builder.modulesSubmitted}</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);letter-spacing:1px;margin-top:4px">MODULES</div>
+        </div>
+        <div style="padding:12px;background:var(--bg-primary);border-radius:var(--radius-sm);text-align:center">
+          <div style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--green)">${parseFloat(ethers.formatEther(builder.totalEarnings)).toFixed(4)}</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);letter-spacing:1px;margin-top:4px">EARNINGS (ETH)</div>
+        </div>
+      </div>
+
+      ${modsHtml ? '<div style="margin-bottom:20px"><div style="font-size:12px;font-family:var(--font-mono);color:var(--text-tertiary);letter-spacing:1px;margin-bottom:8px;text-transform:uppercase">MY MODULES</div>' + modsHtml + '</div>' : ''}
+
+      <details open>
+        <summary>Submit New Module</summary>
+        <div style="margin-top:12px;max-width:480px">
+          <div class="form-row">
+            <label class="form-row__label">Module Key</label>
+            <input type="text" class="form-input" id="modKey" maxlength="64" placeholder="unique-module-name (becomes bytes32 hash)">
+          </div>
+          <div class="form-row">
+            <label class="form-row__label">Display Name</label>
+            <input type="text" class="form-input" id="modDisplayName" maxlength="64" placeholder="My Awesome Module">
+          </div>
+          <div class="form-row" style="align-items:flex-start">
+            <label class="form-row__label" style="margin-top:10px">Description</label>
+            <textarea class="form-textarea" id="modDesc" maxlength="512" placeholder="What does this module do?"></textarea>
+          </div>
+          <div class="form-row">
+            <label class="form-row__label">Version</label>
+            <input type="text" class="form-input" id="modVersion" maxlength="32" placeholder="1.0.0">
+          </div>
+          <div class="form-row">
+            <label class="form-row__label">Price (ETH)</label>
+            <input type="number" class="form-input" id="modPrice" min="0" max="10" step="0.001" value="0" placeholder="0 = free">
+          </div>
+          <button class="btn btn--primary btn--full" onclick="doSubmitModule()">Submit Module — 0.001 ETH listing fee</button>
+          <div id="submitStatus" style="display:none"></div>
+        </div>
+      </details>
+    `;
+  } catch (e) {
+    console.error('Builder hub error:', e);
+    document.getElementById('builderHub').innerHTML = '<div class="error-text">Failed to load builder profile: ' + ExoCore.escHtml(e.message) + '</div>';
+  }
+}
+
+// ── Builder Actions ──
+async function doRegisterBuilder() {
+  const name = document.getElementById('builderName').value.trim();
+  const bio = document.getElementById('builderBio').value.trim();
+  if (!name) { ExoUI.showStatus('builderStatus', 'Name is required', 'error'); return; }
+
+  ExoUI.showStatus('builderStatus', 'Confirm transaction in your wallet...', 'pending');
+  try {
+    const mp = ExoCore.getSignedContract('marketplace');
+    const tx = await mp.registerBuilder(name, bio);
+    ExoUI.showStatus('builderStatus', 'Registering... <a href="https://basescan.org/tx/' + tx.hash + '" target="_blank">TX</a>', 'pending');
+    await tx.wait();
+    ExoUI.showStatus('builderStatus', 'Registered as builder!', 'ok');
+    setTimeout(loadBuilderHub, 1500);
+  } catch (e) {
+    const msg = e.code === 'ACTION_REJECTED' ? 'Transaction rejected' : (e.shortMessage || e.message);
+    ExoUI.showStatus('builderStatus', msg, 'error');
+  }
+}
+
+async function doSubmitModule() {
+  const key = document.getElementById('modKey').value.trim();
+  const displayName = document.getElementById('modDisplayName').value.trim();
+  const desc = document.getElementById('modDesc').value.trim();
+  const version = document.getElementById('modVersion').value.trim();
+  const priceStr = document.getElementById('modPrice').value;
+
+  if (!key || !displayName || !version) { ExoUI.showStatus('submitStatus', 'Key, name, and version are required', 'error'); return; }
+
+  const moduleName = ethers.keccak256(ethers.toUtf8Bytes(key));
+  const price = ethers.parseEther(priceStr || '0');
+
+  ExoUI.showStatus('submitStatus', 'Confirm transaction in your wallet...', 'pending');
+  try {
+    const mp = ExoCore.getSignedContract('marketplace');
+    const listingFee = await ExoCore.contracts.marketplace.LISTING_FEE();
+    const tx = await mp.submitModule(moduleName, displayName, desc, version, price, { value: listingFee });
+    ExoUI.showStatus('submitStatus', 'Submitting... <a href="https://basescan.org/tx/' + tx.hash + '" target="_blank">TX</a>', 'pending');
+    await tx.wait();
+    ExoUI.showStatus('submitStatus', 'Module submitted! Awaiting approval.', 'ok');
+    setTimeout(() => { loadBuilderHub(); loadModules(); }, 2000);
+  } catch (e) {
+    const msg = e.code === 'ACTION_REJECTED' ? 'Transaction rejected' : (e.shortMessage || e.message);
+    ExoUI.showStatus('submitStatus', msg, 'error');
+  }
+}
+
+async function doUpdatePrice(nameHash) {
+  const newPrice = prompt('Enter new price in ETH (0 = free):');
+  if (newPrice === null) return;
+  try {
+    const mp = ExoCore.getSignedContract('marketplace');
+    const tx = await mp.updateModulePrice(nameHash, ethers.parseEther(newPrice));
+    await tx.wait();
+    alert('Price updated!');
+    loadBuilderHub();
+  } catch (e) {
+    alert('Error: ' + (e.shortMessage || e.message));
+  }
+}
+
+async function doUpdateDesc(nameHash) {
+  const newDesc = prompt('Enter new description:');
+  if (newDesc === null) return;
+  try {
+    const mp = ExoCore.getSignedContract('marketplace');
+    const tx = await mp.updateModuleDescription(nameHash, newDesc);
+    await tx.wait();
+    alert('Description updated!');
+    loadBuilderHub();
+  } catch (e) {
+    alert('Error: ' + (e.shortMessage || e.message));
+  }
+}
+
+async function doUpdateVersion(nameHash) {
+  const newVer = prompt('Enter new version:');
+  if (newVer === null) return;
+  try {
+    const mp = ExoCore.getSignedContract('marketplace');
+    const tx = await mp.updateModuleVersion(nameHash, newVer);
+    await tx.wait();
+    alert('Version updated!');
+    loadBuilderHub();
+  } catch (e) {
+    alert('Error: ' + (e.shortMessage || e.message));
+  }
+}
+
+async function doDelist(nameHash) {
+  if (!confirm('Are you sure you want to delist this module? This cannot be undone.')) return;
+  try {
+    const mp = ExoCore.getSignedContract('marketplace');
+    const tx = await mp.builderDelistModule(nameHash);
+    await tx.wait();
+    alert('Module delisted.');
+    loadBuilderHub();
+    loadModules();
+  } catch (e) {
+    alert('Error: ' + (e.shortMessage || e.message));
+  }
+}
+
+// ── My Exoskeletons — Activate/Deactivate ──
+async function loadMyExoskeletons() {
+  const account = ExoCore.account;
+  if (!account) { document.getElementById('myExoPanel').classList.add('hidden'); return; }
+
+  try {
+    const tokenIds = await ExoCore.getOwnedTokens(account);
+    if (tokenIds.length === 0) { document.getElementById('myExoPanel').classList.add('hidden'); return; }
+
+    document.getElementById('myExoPanel').classList.remove('hidden');
+    const approvedMods = allModules.filter(m => m.status === 2);
+
+    let html = '';
+    for (const tokenId of tokenIds) {
+      const [profile, activeMods] = await Promise.all([
+        ExoCore.contracts.registry.getProfile(tokenId),
+        ExoCore.contracts.marketplace.getTokenActiveModules(tokenId).catch(() => []),
+      ]);
+
+      // Resolve active module names
+      const activeModDetails = [];
+      for (const hash of activeMods) {
+        const mod = allModules.find(m => m.nameHash === hash);
+        activeModDetails.push({ hash, name: mod ? mod.name : hash.substring(0, 10) + '...' });
+      }
+
+      // Available modules to activate (approved and not already active)
+      const activeSet = new Set(activeMods.map(h => h));
+      const available = approvedMods.filter(m => !activeSet.has(m.nameHash));
+
+      html += `<div style="margin-bottom:16px;padding:16px;background:var(--bg-primary);border-radius:var(--radius-md)">`;
+      html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">`;
+      html += `<span style="font-weight:600">#${tokenId}${profile.name ? ' — ' + ExoCore.escHtml(profile.name) : ''}</span>`;
+      html += `<span class="text-mono" style="font-size:12px;color:var(--text-secondary)">${activeMods.length} active</span>`;
+      html += '</div>';
+
+      // Active modules with deactivate
+      if (activeModDetails.length > 0) {
+        html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">';
+        for (const am of activeModDetails) {
+          html += `<span class="mod-tag">${ExoCore.escHtml(am.name)} <button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;padding:0 0 0 6px" onclick="doDeactivate(${tokenId},'${am.hash}')" title="Deactivate">✕</button></span>`;
+        }
+        html += '</div>';
+      }
+
+      // Activate dropdown
+      if (available.length > 0) {
+        html += `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">`;
+        html += `<select class="form-select" id="activateSel_${tokenId}" style="padding:6px 10px;font-size:12px;max-width:220px">`;
+        for (const m of available) {
+          const label = m.name + (m.price > 0n ? ' (' + parseFloat(ethers.formatEther(m.price)).toFixed(4) + ' ETH)' : ' (Free)');
+          html += `<option value="${m.nameHash}">${ExoCore.escHtml(label)}</option>`;
+        }
+        html += `</select>`;
+        html += `<button class="btn btn--secondary btn--sm" onclick="doActivate(${tokenId})">Activate</button>`;
+        html += '</div>';
+      } else if (approvedMods.length === 0) {
+        html += '<div style="font-size:12px;color:var(--text-tertiary)">No modules available yet</div>';
+      }
+
+      html += '</div>';
+    }
+
+    document.getElementById('myExoList').innerHTML = html;
+  } catch (e) {
+    console.error('My exo error:', e);
+  }
+}
+
+async function doActivate(tokenId) {
+  const sel = document.getElementById('activateSel_' + tokenId);
+  if (!sel) return;
+  const nameHash = sel.value;
+  const mod = allModules.find(m => m.nameHash === nameHash);
+  const price = mod ? mod.price : 0n;
+
+  try {
+    const mp = ExoCore.getSignedContract('marketplace');
+    const tx = await mp.activateModule(tokenId, nameHash, { value: price });
+    sel.disabled = true;
+    await tx.wait();
+    alert('Module activated on #' + tokenId + '!');
+    loadMyExoskeletons();
+    loadModules();
+    loadStats();
+  } catch (e) {
+    if (e.code !== 'ACTION_REJECTED') alert('Error: ' + (e.shortMessage || e.message));
+  }
+}
+
+async function doDeactivate(tokenId, nameHash) {
+  try {
+    const mp = ExoCore.getSignedContract('marketplace');
+    const tx = await mp.deactivateModule(tokenId, nameHash);
+    await tx.wait();
+    alert('Module deactivated from #' + tokenId);
+    loadMyExoskeletons();
+  } catch (e) {
+    if (e.code !== 'ACTION_REJECTED') alert('Error: ' + (e.shortMessage || e.message));
+  }
+}
+
+// ── Account Change Handler ──
+window.addEventListener('exo:accountChanged', () => {
+  loadBuilderHub();
+  loadMyExoskeletons();
+});
+
+// ── Init ──
+ExoCore.onReady(async () => {
+  await Promise.all([loadStats(), loadModules()]);
+  loadBuilderHub();
+  loadMyExoskeletons();
+});
+</script>
+
+<style>
+.filter-btn--active {
+  color: var(--gold) !important;
+  background: rgba(255,215,0,0.08) !important;
+}
+</style>
+</body>
+</html>
