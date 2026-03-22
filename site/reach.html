@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reach — The Web Interface for AI Agents</title>
+<meta name="description" content="8 primitives. One library. Complete web autonomy for AI agents. Browse, login, sign, pay, observe, persist, email — all from code.">
+<meta property="og:title" content="Reach — The Web Interface for AI Agents">
+<meta property="og:description" content="Give your agent hands. 8 primitives, 5 site skills, 133 tests. npm install reach-agent.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://exoagent.xyz/reach">
+<link rel="stylesheet" href="shared/exo-style.css">
+<style>
+/* ── Reach page styles ── */
+.reach-hero {
+  text-align: center;
+  padding: 72px 40px 48px;
+  position: relative;
+  z-index: 10;
+}
+.reach-hero__tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--amber);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  opacity: 0.8;
+}
+.reach-hero__title {
+  font-family: var(--font-heading);
+  font-size: 44px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 2px;
+  margin-bottom: 16px;
+  line-height: 1.15;
+}
+.reach-hero__title em {
+  font-style: normal;
+  color: #00b4d8;
+  text-shadow: 0 0 30px rgba(0,180,216,0.3);
+}
+.reach-hero__sub {
+  font-size: 18px;
+  color: var(--text-secondary);
+  max-width: 560px;
+  margin: 0 auto 36px;
+  line-height: 1.7;
+}
+.reach-hero__install {
+  display: inline-block;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px 32px;
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: var(--green);
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  letter-spacing: 0.5px;
+}
+.reach-hero__install:hover {
+  border-color: var(--green);
+  box-shadow: 0 0 20px rgba(0,255,170,0.15);
+}
+.reach-hero__install .copy-hint {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  opacity: 0;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+.reach-hero__install:hover .copy-hint { opacity: 1; }
+.reach-hero__install.copied { border-color: var(--amber); }
+.reach-hero__install.copied .copy-hint { opacity: 1; color: var(--amber); }
+
+.reach-hero__links {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-top: 24px;
+}
+.reach-hero__links a {
+  font-size: 14px;
+  color: var(--text-tertiary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.reach-hero__links a:hover { color: var(--cyan); }
+
+/* ── Demo code block ── */
+.reach-demo {
+  max-width: 640px;
+  margin: 0 auto 0;
+  padding: 0 40px;
+  position: relative;
+  z-index: 10;
+}
+.reach-demo__block {
+  background: #0d0d14;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px 32px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 2;
+  overflow-x: auto;
+  position: relative;
+}
+.reach-demo__block .line-comment { color: #5a5a7a; }
+.reach-demo__block .line-keyword { color: #c792ea; }
+.reach-demo__block .line-const { color: #82aaff; }
+.reach-demo__block .line-string { color: #c3e88d; }
+.reach-demo__block .line-method { color: #ffcb6b; }
+.reach-demo__block .line-func { color: #82aaff; }
+.reach-demo__block .line-obj { color: #f07178; }
+.reach-demo__block .line-prop { color: var(--text-primary); }
+.reach-demo__label {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* ── Stats bar ── */
+.reach-stats {
+  display: flex;
+  justify-content: center;
+  gap: 48px;
+  padding: 40px;
+  position: relative;
+  z-index: 10;
+}
+.reach-stat {
+  text-align: center;
+}
+.reach-stat__value {
+  font-family: var(--font-heading);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.reach-stat__value--cyan { color: var(--cyan); }
+.reach-stat__value--green { color: var(--green); }
+.reach-stat__value--amber { color: var(--amber); }
+.reach-stat__label {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 4px;
+}
+
+/* ── Primitives grid ── */
+.reach-section {
+  position: relative;
+  z-index: 10;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 48px 40px;
+}
+.reach-section__title {
+  font-family: var(--font-heading);
+  font-size: 24px;
+  letter-spacing: 1px;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+.reach-section__sub {
+  color: var(--text-secondary);
+  font-size: 15px;
+  margin-bottom: 32px;
+  max-width: 600px;
+}
+.prim-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.prim-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 24px 20px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.prim-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: 0 0 20px rgba(0,180,216,0.08);
+}
+.prim-card__icon {
+  font-size: 24px;
+  margin-bottom: 12px;
+  display: block;
+}
+.prim-card__name {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cyan);
+  margin-bottom: 8px;
+}
+.prim-card__desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ── Site skills ── */
+.skills-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+.skill-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+.skill-card:hover { border-color: var(--border-hover); }
+.skill-card__name {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.skill-card__type {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+/* ── Exo integration section ── */
+.exo-integration {
+  position: relative;
+  z-index: 10;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 48px 40px;
+}
+.exo-int__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: center;
+}
+.exo-int__text h2 {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+}
+.exo-int__text h2 em {
+  font-style: normal;
+  color: var(--amber);
+}
+.exo-int__text p {
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+.exo-int__features {
+  list-style: none;
+  padding: 0;
+}
+.exo-int__features li {
+  font-size: 14px;
+  color: var(--text-secondary);
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.exo-int__features li::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--amber);
+  border-radius: 1px;
+  margin-right: 10px;
+  transform: rotate(45deg);
+  vertical-align: middle;
+}
+.exo-int__code {
+  background: #0d0d14;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 2;
+  overflow-x: auto;
+}
+
+/* ── How it works ── */
+.how-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.how-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 28px 24px;
+}
+.how-card__step {
+  font-family: var(--font-heading);
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--cyan);
+  opacity: 0.3;
+  margin-bottom: 12px;
+}
+.how-card__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+.how-card__desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ── Footer ── */
+.site-footer {
+  padding: 40px;
+  text-align: center;
+  position: relative;
+  z-index: 10;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.site-footer::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,180,216,0.15) 30%, rgba(240,160,48,0.15) 70%, transparent);
+}
+.footer__links {
+  display: flex; justify-content: center; gap: 24px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.footer__links a { font-size: 13px; color: #8888a0; text-decoration: none; transition: color 0.2s; }
+.footer__links a:hover { color: #00b4d8; }
+.footer__built { font-size: 12px; color: #555568; line-height: 1.8; }
+.footer__built a { color: #555568; }
+.footer__built a:hover { color: #00b4d8; }
+.footer__built .f-gold { color: #f0a030; }
+.footer__built .f-cyan { color: #00b4d8; }
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .prim-grid { grid-template-columns: repeat(2, 1fr); }
+  .skills-grid { grid-template-columns: repeat(3, 1fr); }
+  .exo-int__grid { grid-template-columns: 1fr; }
+  .how-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .reach-hero { padding: 48px 20px 32px; }
+  .reach-hero__title { font-size: 28px; }
+  .reach-hero__install { font-size: 14px; padding: 12px 20px; }
+  .reach-stats { gap: 24px; flex-wrap: wrap; padding: 24px 20px; }
+  .reach-stat__value { font-size: 22px; }
+  .prim-grid { grid-template-columns: 1fr; }
+  .skills-grid { grid-template-columns: repeat(2, 1fr); }
+  .reach-section { padding: 32px 20px; }
+  .exo-integration { padding: 32px 20px; }
+  .reach-demo { padding: 0 20px; }
+  .reach-demo__block { padding: 20px; font-size: 12px; }
+  .site-footer { padding: 32px 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ NAV ═══ -->
+<nav class="nav">
+  <div class="nav__inner">
+    <a href="/" class="nav__logo">EXO<span class="nav__logo-accent">SKELETON</span></a>
+    <div class="nav__primary-links">
+      <a href="/" class="nav__link">Home</a>
+      <a href="/mint" class="nav__link">Mint</a>
+      <a href="/explore" class="nav__link">Explore</a>
+      <a href="/play" class="nav__link">Play</a>
+      <a href="/build" class="nav__link">Build</a>
+      <a href="/reach" class="nav__link nav__link--active">Reach</a>
+    </div>
+    <div class="nav__spacer"></div>
+    <button class="nav__wallet nav__wallet--disconnected" id="navWalletBtn" onclick="onWalletClick()">Connect</button>
+    <button class="nav__hamburger" id="navHamburger" onclick="toggleMobile()" aria-label="Menu">
+      <span class="nav__hamburger-line"></span>
+      <span class="nav__hamburger-line"></span>
+      <span class="nav__hamburger-line"></span>
+    </button>
+  </div>
+</nav>
+<div class="nav__mobile-overlay" id="navMobileOverlay">
+  <div class="nav__mobile-menu">
+    <a href="/" class="nav__mobile-link">Home</a>
+    <a href="/mint" class="nav__mobile-link">Mint</a>
+    <a href="/explore" class="nav__mobile-link">Explore</a>
+    <a href="/play" class="nav__mobile-link">Play</a>
+    <a href="/build" class="nav__mobile-link">Build</a>
+    <a href="/reach" class="nav__mobile-link nav__mobile-link--active">Reach</a>
+    <div class="nav__dropdown-divider"></div>
+    <button class="nav__wallet nav__wallet--disconnected" id="navWalletBtnMobile" onclick="onWalletClick()" style="margin-top:16px;width:100%">Connect</button>
+  </div>
+</div>
+
+<!-- ═══ HERO ═══ -->
+<div class="reach-hero">
+  <span class="reach-hero__tag">Agent Infrastructure</span>
+  <h1 class="reach-hero__title">Reach</h1>
+  <p class="reach-hero__sub">The web interface for AI agents. Browse websites, fill forms, login to services, sign transactions, send emails, watch for changes, and make payments — all from code.</p>
+  <div class="reach-hero__install" onclick="copyInstall(this)" title="Click to copy">
+    <span class="copy-hint">click to copy</span>
+    npm install reach-agent
+  </div>
+  <div class="reach-hero__links">
+    <a href="https://github.com/Potdealer/reach" target="_blank">GitHub</a>
+    <a href="https://github.com/Potdealer/reach/blob/main/README.md" target="_blank">README</a>
+    <a href="https://github.com/Potdealer/reach/blob/main/SKILL.md" target="_blank">SKILL.md</a>
+  </div>
+</div>
+
+<!-- ═══ DEMO ═══ -->
+<div class="reach-demo">
+  <div class="reach-demo__block">
+    <span class="reach-demo__label">5 lines</span>
+    <span class="line-keyword">import</span> <span class="line-prop">{ Reach }</span> <span class="line-keyword">from</span> <span class="line-string">'reach-agent'</span>;<br>
+    <span class="line-keyword">const</span> <span class="line-const">reach</span> = <span class="line-keyword">new</span> <span class="line-func">Reach</span>();<br>
+    <br>
+    <span class="line-keyword">await</span> <span class="line-const">reach</span>.<span class="line-method">authenticate</span>(<span class="line-string">'github'</span>, <span class="line-string">'login'</span>, { <span class="line-prop">url, email, password</span> });<br>
+    <span class="line-keyword">await</span> <span class="line-const">reach</span>.<span class="line-method">act</span>(<span class="line-string">'https://github.com/new'</span>, <span class="line-string">'submit'</span>, { <span class="line-prop">data</span>: { <span class="line-prop">name</span>: <span class="line-string">'my-repo'</span> } });<br>
+    <span class="line-keyword">await</span> <span class="line-const">reach</span>.<span class="line-method">close</span>();
+  </div>
+</div>
+
+<!-- ═══ STATS ═══ -->
+<div class="reach-stats">
+  <div class="reach-stat">
+    <div class="reach-stat__value reach-stat__value--cyan">133</div>
+    <div class="reach-stat__label">Tests Passing</div>
+  </div>
+  <div class="reach-stat">
+    <div class="reach-stat__value reach-stat__value--green">8</div>
+    <div class="reach-stat__label">Primitives</div>
+  </div>
+  <div class="reach-stat">
+    <div class="reach-stat__value reach-stat__value--amber">5</div>
+    <div class="reach-stat__label">Site Skills</div>
+  </div>
+</div>
+
+<!-- ═══ DIVIDER ═══ -->
+<div class="divider"><div class="divider-line"></div><div class="divider-node"></div><div class="divider-line"></div></div>
+
+<!-- ═══ PRIMITIVES ═══ -->
+<div class="reach-section">
+  <h2 class="reach-section__title">8 Primitives</h2>
+  <p class="reach-section__sub">Each primitive does one thing well. Compose them for complex workflows. The router picks the optimal approach automatically.</p>
+  <div class="prim-grid">
+    <div class="prim-card">
+      <span class="prim-card__icon">&#x1F310;</span>
+      <div class="prim-card__name">fetch</div>
+      <div class="prim-card__desc">Read any webpage. HTTP first, browser fallback for JS-rendered sites. Markdown, JSON, or screenshot output.</div>
+    </div>
+    <div class="prim-card">
+      <span class="prim-card__icon">&#x1F3AF;</span>
+      <div class="prim-card__name">act</div>
+      <div class="prim-card__desc">Interact with pages. Click buttons, fill forms, submit data. Handles navigation, waits, and dynamic content.</div>
+    </div>
+    <div class="prim-card">
+      <span class="prim-card__icon">&#x1F512;</span>
+      <div class="prim-card__name">authenticate</div>
+      <div class="prim-card__desc">Login to any service. Supports browser-based login, API keys, cookies, and multi-step auth flows.</div>
+    </div>
+    <div class="prim-card">
+      <span class="prim-card__icon">&#x270D;&#xFE0F;</span>
+      <div class="prim-card__name">sign</div>
+      <div class="prim-card__desc">Cryptographic signing. Sign messages, typed data (EIP-712), or raw transactions with any wallet.</div>
+    </div>
+    <div class="prim-card">
+      <span class="prim-card__icon">&#x1F441;</span>
+      <div class="prim-card__name">observe</div>
+      <div class="prim-card__desc">Watch for changes. Poll URLs, listen to WebSockets, monitor DOM mutations. Callback on change.</div>
+    </div>
+    <div class="prim-card">
+      <span class="prim-card__icon">&#x1F4BE;</span>
+      <div class="prim-card__name">persist</div>
+      <div class="prim-card__desc">Key-value storage with TTL and encryption. Store sessions, form data, agent state across runs.</div>
+    </div>
+    <div class="prim-card">
+      <span class="prim-card__icon">&#x1F4B3;</span>
+      <div class="prim-card__name">pay</div>
+      <div class="prim-card__desc">Send ETH or ERC-20 tokens. Native Base support, gas estimation, receipt tracking.</div>
+    </div>
+    <div class="prim-card">
+      <span class="prim-card__icon">&#x2709;&#xFE0F;</span>
+      <div class="prim-card__name">email</div>
+      <div class="prim-card__desc">Send transactional email via Resend. HTML or plain text, attachments, delivery tracking.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DIVIDER ═══ -->
+<div class="divider"><div class="divider-line"></div><div class="divider-node"></div><div class="divider-line"></div></div>
+
+<!-- ═══ SITE SKILLS ═══ -->
+<div class="reach-section">
+  <h2 class="reach-section__title">Site Skills</h2>
+  <p class="reach-section__sub">Pre-built workflows for specific platforms. Login, navigate, and extract data without writing selectors.</p>
+  <div class="skills-grid">
+    <div class="skill-card">
+      <div class="skill-card__name">Code4rena</div>
+      <div class="skill-card__type">Audit Contests</div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-card__name">Immunefi</div>
+      <div class="skill-card__type">Bug Bounties</div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-card__name">Upwork</div>
+      <div class="skill-card__type">Freelance Jobs</div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-card__name">GitHub</div>
+      <div class="skill-card__type">Repos &amp; Issues</div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-card__name">Exoskeletons</div>
+      <div class="skill-card__type">Onchain Identity</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DIVIDER ═══ -->
+<div class="divider"><div class="divider-line"></div><div class="divider-node"></div><div class="divider-line"></div></div>
+
+<!-- ═══ HOW IT WORKS ═══ -->
+<div class="reach-section">
+  <h2 class="reach-section__title">How It Works</h2>
+  <div class="how-grid">
+    <div class="how-card">
+      <div class="how-card__step">01</div>
+      <div class="how-card__title">Smart Routing</div>
+      <div class="how-card__desc">The router analyzes each task and picks the fastest approach: raw HTTP for APIs, headless browser for SPAs, or direct DOM manipulation for forms.</div>
+    </div>
+    <div class="how-card">
+      <div class="how-card__step">02</div>
+      <div class="how-card__title">Session Memory</div>
+      <div class="how-card__desc">Cookies, auth tokens, and form data persist across runs. Authenticate once, then act freely. Sensitive fields are auto-redacted from storage.</div>
+    </div>
+    <div class="how-card">
+      <div class="how-card__step">03</div>
+      <div class="how-card__title">Natural Language</div>
+      <div class="how-card__desc">Tell Reach what to do in plain English. "Search Upwork for Solidity jobs" maps to the right primitive, site skill, and parameters automatically.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DIVIDER ═══ -->
+<div class="divider"><div class="divider-line"></div><div class="divider-node"></div><div class="divider-line"></div></div>
+
+<!-- ═══ EXO INTEGRATION ═══ -->
+<div class="exo-integration">
+  <div class="exo-int__grid">
+    <div class="exo-int__text">
+      <h2>Works Better with <em>Exoskeletons</em></h2>
+      <p>Pass a wallet with an Exoskeleton and Reach automatically resolves your onchain identity — reputation, trust tier, and visual config. Your agent carries its identity across the web.</p>
+      <ul class="exo-int__features">
+        <li>Auto-resolve Exo identity from wallet address</li>
+        <li>Reputation-gated access to premium site skills</li>
+        <li>Activity logging writes back to your Exo profile</li>
+        <li>Sign transactions through your Exo's ERC-6551 TBA</li>
+        <li>Works without an Exo too — identity is optional</li>
+      </ul>
+    </div>
+    <div class="exo-int__code">
+      <span class="line-keyword">const</span> <span class="line-const">reach</span> = <span class="line-keyword">new</span> <span class="line-func">Reach</span>({<br>
+      &nbsp;&nbsp;<span class="line-prop">wallet</span>: { <span class="line-prop">privateKey</span>: process.env.<span class="line-obj">PRIVATE_KEY</span> }<br>
+      });<br>
+      <br>
+      <span class="line-comment">// Identity auto-resolves in background</span><br>
+      <span class="line-keyword">const</span> <span class="line-const">identity</span> = <span class="line-keyword">await</span> <span class="line-const">reach</span>.<span class="line-method">waitForIdentity</span>();<br>
+      <br>
+      console.<span class="line-method">log</span>(<span class="line-const">identity</span>.<span class="line-prop">name</span>); &nbsp;<span class="line-comment">// "Exo #1"</span><br>
+      console.<span class="line-method">log</span>(<span class="line-const">identity</span>.<span class="line-prop">reputation</span>); <span class="line-comment">// 1020</span><br>
+      console.<span class="line-method">log</span>(<span class="line-const">identity</span>.<span class="line-prop">trustTier</span>); <span class="line-comment">// "proven"</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FOOTER ═══ -->
+<div class="site-footer">
+  <div class="footer__links">
+    <a href="https://github.com/Potdealer/reach" target="_blank">GitHub</a>
+    <a href="https://github.com/Potdealer/exoskeletons" target="_blank">Exoskeletons</a>
+    <a href="https://x.com/ollie_exo" target="_blank">@ollie_exo</a>
+    <a href="https://warpcast.com/olliebot" target="_blank">Farcaster</a>
+    <a href="https://basescan.org/address/0x8241BDD5009ed3F6C99737D2415994B58296Da0d" target="_blank">Basescan</a>
+  </div>
+  <div class="footer__built">
+    Built by <span class="f-gold">potdealer</span> and <span class="f-cyan">Ollie</span>. CC0. Fully onchain on Base.
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"></script>
+<script src="shared/exo-core.js"></script>
+<script>
+// ── Background ──
+(function() {
+  const els = [
+    '<div class="grid-bg" style="opacity:0.5"></div>',
+    '<div class="light-trail trail-h trail-1" style="opacity:0.3"></div>',
+    '<div class="light-trail trail-h trail-2" style="opacity:0.2"></div>',
+    '<div class="neon-line neon-line-1"></div>',
+    '<div class="neon-line neon-line-3"></div>',
+  ];
+  document.body.insertAdjacentHTML('afterbegin', els.join(''));
+})();
+
+// ── Copy install command ──
+function copyInstall(el) {
+  navigator.clipboard.writeText('npm install reach-agent').then(function() {
+    el.classList.add('copied');
+    el.querySelector('.copy-hint').textContent = 'copied!';
+    setTimeout(function() {
+      el.classList.remove('copied');
+      el.querySelector('.copy-hint').textContent = 'click to copy';
+    }, 2000);
+  });
+}
+</script>
+</body>
+</html>

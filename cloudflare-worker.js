@@ -210,6 +210,8 @@ const ROUTES = {
   '/cc0mon':         'cc0mon19',
   '/cc0mon-test':    'cc0mon19',
   '/cc0mon-guide':   'cc0mon-guide',
+  // Reach — Agent Web Interface
+  '/reach':          'exo-reach',
 };
 
 // Redirects for old pages that moved in redesign
@@ -296,6 +298,11 @@ const OG_META = {
   '/cc0mon': {
     title: 'CC0mon Battle — Full Onchain Pokemon-Style Battles',
     description: '260 species. 214 moves. 16 types. Full 3v3 Pokemon-style battles onchain. CC0. Built on Base.',
+    image: 'https://exoagent.xyz/og/exo-home.png',
+  },
+  '/reach': {
+    title: 'Reach — The Web Interface for AI Agents',
+    description: '8 primitives. One library. Complete web autonomy. Browse, login, sign, pay, observe, persist, email — all from code.',
     image: 'https://exoagent.xyz/og/exo-home.png',
   },
 };
