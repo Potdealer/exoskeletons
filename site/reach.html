@@ -6,7 +6,7 @@
 <title>Reach — The Web Interface for AI Agents</title>
 <meta name="description" content="8 primitives. One library. Complete web autonomy for AI agents. Browse, login, sign, pay, observe, persist, email — all from code.">
 <meta property="og:title" content="Reach — The Web Interface for AI Agents">
-<meta property="og:description" content="Give your agent hands. 8 primitives, 5 site skills, 133 tests. npm install reach-agent.">
+<meta property="og:description" content="Give your agent hands. 8 primitives, 133 tests. Write your own site skills. npm install reach-agent.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://exoagent.xyz/reach">
 <link rel="stylesheet" href="shared/exo-style.css">
@@ -464,8 +464,8 @@
     <div class="reach-stat__label">Primitives</div>
   </div>
   <div class="reach-stat">
-    <div class="reach-stat__value reach-stat__value--amber">5</div>
-    <div class="reach-stat__label">Site Skills</div>
+    <div class="reach-stat__value reach-stat__value--amber">2+</div>
+    <div class="reach-stat__label">Site Skills + Template</div>
   </div>
 </div>
 
@@ -526,27 +526,19 @@
 <!-- ═══ SITE SKILLS ═══ -->
 <div class="reach-section">
   <h2 class="reach-section__title">Site Skills</h2>
-  <p class="reach-section__sub">Pre-built workflows for specific platforms. Login, navigate, and extract data without writing selectors.</p>
-  <div class="skills-grid">
-    <div class="skill-card">
-      <div class="skill-card__name">Code4rena</div>
-      <div class="skill-card__type">Audit Contests</div>
-    </div>
-    <div class="skill-card">
-      <div class="skill-card__name">Immunefi</div>
-      <div class="skill-card__type">Bug Bounties</div>
-    </div>
-    <div class="skill-card">
-      <div class="skill-card__name">Upwork</div>
-      <div class="skill-card__type">Freelance Jobs</div>
-    </div>
+  <p class="reach-section__sub">Teach Reach how to navigate any platform. Write custom workflows for the sites your agent uses. Two included out of the box, plus a template to build your own.</p>
+  <div class="skills-grid" style="grid-template-columns: repeat(3, 1fr);">
     <div class="skill-card">
       <div class="skill-card__name">GitHub</div>
-      <div class="skill-card__type">Repos &amp; Issues</div>
+      <div class="skill-card__type">API-native — repos, issues, PRs, search</div>
     </div>
     <div class="skill-card">
       <div class="skill-card__name">Exoskeletons</div>
-      <div class="skill-card__type">Onchain Identity</div>
+      <div class="skill-card__type">Onchain identity, reputation, ELO</div>
+    </div>
+    <div class="skill-card" style="border-color: rgba(0,255,170,0.2);">
+      <div class="skill-card__name" style="color: #00FFAA;">Write Your Own</div>
+      <div class="skill-card__type">Template included — copy, customize, done</div>
     </div>
   </div>
 </div>
@@ -571,7 +563,7 @@
     <div class="how-card">
       <div class="how-card__step">03</div>
       <div class="how-card__title">Natural Language</div>
-      <div class="how-card__desc">Tell Reach what to do in plain English. "Search Upwork for Solidity jobs" maps to the right primitive, site skill, and parameters automatically.</div>
+      <div class="how-card__desc">Tell Reach what to do in plain English. Natural language maps to the right primitive and parameters automatically.</div>
     </div>
   </div>
 </div>
@@ -587,7 +579,7 @@
       <p>Pass a wallet with an Exoskeleton and Reach automatically resolves your onchain identity — reputation, trust tier, and visual config. Your agent carries its identity across the web.</p>
       <ul class="exo-int__features">
         <li>Auto-resolve Exo identity from wallet address</li>
-        <li>Reputation-gated access to premium site skills</li>
+        <li>Reputation-gated access to premium features</li>
         <li>Activity logging writes back to your Exo profile</li>
         <li>Sign transactions through your Exo's ERC-6551 TBA</li>
         <li>Works without an Exo too — identity is optional</li>
