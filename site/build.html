@@ -10,22 +10,22 @@
 /* ── Build hub styles ── */
 .build-hero {
   text-align: center;
-  padding: 48px 40px 32px;
+  padding: 56px 40px 32px;
   position: relative;
   z-index: 10;
 }
 .build-hero__title {
   font-family: 'Orbitron', monospace, sans-serif;
-  font-size: 32px;
+  font-size: 36px;
   font-weight: 700;
   color: #00FFAA;
   letter-spacing: 3px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   text-shadow: 0 0 30px rgba(0,255,170,0.2);
 }
 .build-hero__sub {
   font-size: 16px;
-  color: #8888a0;
+  color: #9999b0;
   max-width: 520px;
   margin: 0 auto;
   line-height: 1.7;
@@ -43,22 +43,23 @@
   flex-wrap: wrap;
 }
 .section-tab {
-  padding: 10px 24px;
-  font-size: 13px;
+  padding: 10px 28px;
+  font-size: 14px;
   font-weight: 500;
   color: #8888a0;
   cursor: pointer;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: 8px;
   background: none;
   font-family: 'Inter', sans-serif;
-  transition: all 0.2s;
+  transition: all 0.25s;
 }
-.section-tab:hover { color: #e8e8ef; background: rgba(26,26,38,0.5); }
+.section-tab:hover { color: #e8e8ef; background: rgba(26,26,38,0.6); }
 .section-tab--active {
   color: #00FFAA;
   border-color: rgba(0,255,170,0.3);
-  background: rgba(0,255,170,0.06);
+  background: rgba(0,255,170,0.08);
+  font-weight: 600;
 }
 
 /* Sections */
@@ -86,11 +87,15 @@
 
 /* Info blocks */
 .info-block {
-  background: rgba(18,18,26,0.7);
+  background: rgba(18,18,26,0.6);
   border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 28px 24px;
   margin-bottom: 20px;
+  transition: border-color 0.3s;
+}
+.info-block:hover {
+  border-color: rgba(255,255,255,0.1);
 }
 .info-block__title {
   font-family: 'Orbitron', monospace, sans-serif;
@@ -258,13 +263,13 @@
 <!-- ═══ NAV ═══ -->
 <nav class="nav">
   <div class="nav__inner">
-    <a href="home.html" class="nav__logo">EXO<span class="nav__logo-accent">SKELETON</span></a>
+    <a href="/" class="nav__logo">EXO<span class="nav__logo-accent">SKELETON</span></a>
     <div class="nav__primary-links">
-      <a href="home.html" class="nav__link">Home</a>
-      <a href="mint.html" class="nav__link">Mint</a>
-      <a href="explore.html" class="nav__link">Explore</a>
-      <a href="play.html" class="nav__link">Play</a>
-      <a href="build.html" class="nav__link nav__link--active">Build</a>
+      <a href="/" class="nav__link">Home</a>
+      <a href="/mint" class="nav__link">Mint</a>
+      <a href="/explore" class="nav__link">Explore</a>
+      <a href="/play" class="nav__link">Play</a>
+      <a href="/build" class="nav__link nav__link--active">Build</a>
     </div>
     <div class="nav__spacer"></div>
     <button class="nav__wallet nav__wallet--disconnected" id="navWalletBtn" onclick="onWalletClick()">Connect</button>
@@ -277,11 +282,11 @@
 </nav>
 <div class="nav__mobile-overlay" id="navMobileOverlay">
   <div class="nav__mobile-menu">
-    <a href="home.html" class="nav__mobile-link">Home</a>
-    <a href="mint.html" class="nav__mobile-link">Mint</a>
-    <a href="explore.html" class="nav__mobile-link">Explore</a>
-    <a href="play.html" class="nav__mobile-link">Play</a>
-    <a href="build.html" class="nav__mobile-link nav__mobile-link--active">Build</a>
+    <a href="/" class="nav__mobile-link">Home</a>
+    <a href="/mint" class="nav__mobile-link">Mint</a>
+    <a href="/explore" class="nav__mobile-link">Explore</a>
+    <a href="/play" class="nav__mobile-link">Play</a>
+    <a href="/build" class="nav__mobile-link nav__mobile-link--active">Build</a>
     <div class="nav__dropdown-divider"></div>
     <button class="nav__wallet nav__wallet--disconnected" id="navWalletBtnMobile" onclick="onWalletClick()" style="margin-top:16px;width:100%">Connect</button>
   </div>
@@ -313,7 +318,7 @@
 
   <div style="display:flex;justify-content:space-between;align-items:center;margin:24px 0 16px">
     <div class="section-title" style="margin:0;padding:0;border:none">Available Modules</div>
-    <a href="marketplace.html" style="font-size:13px;color:#00FFAA;text-decoration:none">Full Marketplace &rarr;</a>
+    <a href="/marketplace" style="font-size:13px;color:#00FFAA;text-decoration:none">Full Marketplace &rarr;</a>
   </div>
   <div class="module-grid" id="moduleGrid">
     <div class="loading-text" style="grid-column:1/-1">Loading modules...</div>
@@ -378,7 +383,7 @@ cd contracts/modules</div>
   <div class="info-block">
     <div class="info-block__title info-block__title--green">How to Earn $EXO</div>
     <p class="info-block__text">Win Agent Outlier rounds. The EmissionsController allocates $EXO to winners based on tier. NANO wins currently earn 1M $EXO per round. Higher tiers coming as the vault unlocks.</p>
-    <p class="info-block__text">Track your Exoskeleton's $EXO balance via the <a href="explore.html" style="color:#00b4d8">Explorer</a> or directly on Basescan.</p>
+    <p class="info-block__text">Track your Exoskeleton's $EXO balance via the <a href="/explore" style="color:#00b4d8">Explorer</a> or directly on Basescan.</p>
   </div>
 </div>
 
@@ -598,7 +603,7 @@ ExoCore.onReady(async () => {
   ExoCore.autoConnect();
   try {
     const modules = await ExoCore.loadAllMarketplaceModules();
-    const approved = modules.filter(m => m.status === 1); // Approved
+    const approved = modules.filter(m => m.status > 0); // Active modules (1=Approved, 2=Active, etc)
     if (approved.length === 0) {
       document.getElementById('moduleGrid').innerHTML = '<div class="loading-text" style="grid-column:1/-1">No modules available yet</div>';
       return;

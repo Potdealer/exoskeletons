@@ -10,22 +10,22 @@
 /* ── Play hub styles ── */
 .play-hero {
   text-align: center;
-  padding: 48px 40px 32px;
+  padding: 56px 40px 32px;
   position: relative;
   z-index: 10;
 }
 .play-hero__title {
   font-family: 'Orbitron', monospace, sans-serif;
-  font-size: 32px;
+  font-size: 36px;
   font-weight: 700;
   color: #f0a030;
   letter-spacing: 3px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   text-shadow: 0 0 30px rgba(240,160,48,0.2);
 }
 .play-hero__sub {
   font-size: 16px;
-  color: #8888a0;
+  color: #9999b0;
   max-width: 480px;
   margin: 0 auto;
   line-height: 1.7;
@@ -42,18 +42,18 @@
   z-index: 10;
 }
 .game-card {
-  background: rgba(18,18,26,0.8);
+  background: rgba(18,18,26,0.7);
   border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 32px 28px;
-  transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;
+  transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
   display: flex;
   flex-direction: column;
 }
 .game-card:hover {
-  border-color: rgba(0,180,216,0.2);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.3);
-  transform: translateY(-2px);
+  border-color: rgba(0,180,216,0.25);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  transform: translateY(-4px);
 }
 .game-card__badge {
   display: inline-block;
@@ -131,16 +131,27 @@
   border: none;
 }
 .game-btn--primary {
-  background: #00b4d8;
+  background: linear-gradient(135deg, #00b4d8, #0090b0);
   color: #0a0a0f;
+  box-shadow: 0 4px 12px rgba(0,180,216,0.2);
 }
-.game-btn--primary:hover { background: #00c8ef; text-decoration: none; color: #0a0a0f; }
+.game-btn--primary:hover {
+  background: linear-gradient(135deg, #00c8ef, #00a8d0);
+  box-shadow: 0 6px 20px rgba(0,180,216,0.3);
+  transform: translateY(-1px);
+  text-decoration: none; color: #0a0a0f;
+}
 .game-btn--secondary {
   background: transparent;
-  color: #8888a0;
+  color: #9999b0;
   border: 1px solid rgba(255,255,255,0.1);
 }
-.game-btn--secondary:hover { color: #e8e8ef; border-color: rgba(255,255,255,0.2); text-decoration: none; }
+.game-btn--secondary:hover {
+  color: #e8e8ef;
+  border-color: rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.03);
+  text-decoration: none;
+}
 
 /* Scoreboard section */
 .scoreboard-section {
@@ -219,9 +230,12 @@
 .footer__built .f-cyan { color: #00b4d8; }
 
 @media (max-width: 768px) {
-  .play-hero { padding: 32px 20px 24px; }
-  .play-hero__title { font-size: 24px; }
-  .games-grid { grid-template-columns: 1fr; padding: 0 20px; }
+  .play-hero { padding: 40px 20px 24px; }
+  .play-hero__title { font-size: 28px; }
+  .games-grid { grid-template-columns: 1fr; padding: 0 20px; gap: 16px; }
+  .game-card { padding: 24px 20px; }
+  .game-card__actions { gap: 10px; }
+  .game-btn { padding: 10px 20px; font-size: 13px; }
   .scoreboard-section { padding: 0 20px; }
   .site-footer { padding: 32px 20px; }
 }
@@ -232,13 +246,13 @@
 <!-- ═══ NAV ═══ -->
 <nav class="nav">
   <div class="nav__inner">
-    <a href="home.html" class="nav__logo">EXO<span class="nav__logo-accent">SKELETON</span></a>
+    <a href="/" class="nav__logo">EXO<span class="nav__logo-accent">SKELETON</span></a>
     <div class="nav__primary-links">
-      <a href="home.html" class="nav__link">Home</a>
-      <a href="mint.html" class="nav__link">Mint</a>
-      <a href="explore.html" class="nav__link">Explore</a>
-      <a href="play.html" class="nav__link nav__link--active">Play</a>
-      <a href="build.html" class="nav__link">Build</a>
+      <a href="/" class="nav__link">Home</a>
+      <a href="/mint" class="nav__link">Mint</a>
+      <a href="/explore" class="nav__link">Explore</a>
+      <a href="/play" class="nav__link nav__link--active">Play</a>
+      <a href="/build" class="nav__link">Build</a>
     </div>
     <div class="nav__spacer"></div>
     <button class="nav__wallet nav__wallet--disconnected" id="navWalletBtn" onclick="onWalletClick()">Connect</button>
@@ -251,11 +265,11 @@
 </nav>
 <div class="nav__mobile-overlay" id="navMobileOverlay">
   <div class="nav__mobile-menu">
-    <a href="home.html" class="nav__mobile-link">Home</a>
-    <a href="mint.html" class="nav__mobile-link">Mint</a>
-    <a href="explore.html" class="nav__mobile-link">Explore</a>
-    <a href="play.html" class="nav__mobile-link nav__mobile-link--active">Play</a>
-    <a href="build.html" class="nav__mobile-link">Build</a>
+    <a href="/" class="nav__mobile-link">Home</a>
+    <a href="/mint" class="nav__mobile-link">Mint</a>
+    <a href="/explore" class="nav__mobile-link">Explore</a>
+    <a href="/play" class="nav__mobile-link nav__mobile-link--active">Play</a>
+    <a href="/build" class="nav__mobile-link">Build</a>
     <div class="nav__dropdown-divider"></div>
     <button class="nav__wallet nav__wallet--disconnected" id="navWalletBtnMobile" onclick="onWalletClick()" style="margin-top:16px;width:100%">Connect</button>
   </div>
@@ -276,7 +290,7 @@
   <div class="game-card">
     <span class="game-card__badge game-card__badge--live">Live</span>
     <div class="game-card__title">Agent Outlier</div>
-    <p class="game-card__desc">Reflexive beauty contest on Base. Pick the number others won't pick. Win ETH and $EXO rewards. Your ELO rating writes directly to your Exoskeleton NFT. Four tiers from NANO (0.0001 ETH) to HIGH (0.1 ETH).</p>
+    <p class="game-card__desc">Reflexive beauty contest on Base. Pick the number others won't. Win ETH and $EXO. ELO writes to your Exoskeleton. Four tiers from 0.0001 to 0.1 ETH.</p>
     <div class="game-card__stats">
       <div class="game-stat">
         <div class="game-stat__value" id="outlierRounds">917+</div>
@@ -289,7 +303,7 @@
     </div>
     <div class="game-card__actions">
       <a href="https://exoagent.xyz/play" class="game-btn game-btn--primary">Play Now</a>
-      <a href="outlier.html" class="game-btn game-btn--secondary">Learn More</a>
+      <a href="/outlier" class="game-btn game-btn--secondary">Learn More</a>
       <a href="https://basescan.org/address/0x8F7403D5809Dd7245dF268ab9D596B3299A84B5C" target="_blank" class="game-btn game-btn--secondary">Contract</a>
     </div>
   </div>
@@ -298,7 +312,7 @@
   <div class="game-card">
     <span class="game-card__badge game-card__badge--live">Live</span>
     <div class="game-card__title">CC0mon Battle</div>
-    <p class="game-card__desc">Onchain monster battles. Collect CC0mon creatures, train them, and battle other agents. Type advantages, move sets, and ELO rankings. All fully onchain on Base.</p>
+    <p class="game-card__desc">Onchain monster battles. Collect creatures, train them, battle other agents. Type advantages, move sets, and ELO rankings.</p>
     <div class="game-card__stats">
       <div class="game-stat">
         <div class="game-stat__value" style="color:#00FFAA">PvP</div>
@@ -395,44 +409,53 @@ document.getElementById('navMobileOverlay').addEventListener('click', e => {
 // ── Load ELO scoreboard ──
 const OUTLIER_ADDR = '0x8F7403D5809Dd7245dF268ab9D596B3299A84B5C';
 const OUTLIER_ABI = [
-  'function getLeaderboard(uint256 count) view returns (uint256[] tokenIds, uint256[] elos)',
-  'function currentRoundId() view returns (uint256)',
+  'function getPlayerElo(address player) view returns (uint256)',
+  'function getPlayerStats(address player) view returns (uint256 eloRating, uint256 gamesPlayed, uint256 epochGames, uint256 claimable)',
+  'function hasPlayed(address) view returns (bool)',
 ];
+const WALLET_ABI = ['function getWalletAddress(uint256 tokenId) view returns (address)'];
 
 ExoCore.onReady(async () => {
   ExoCore.autoConnect();
   try {
     const outlier = new ethers.Contract(OUTLIER_ADDR, OUTLIER_ABI, ExoCore.provider);
-    const [lb, roundId] = await Promise.all([
-      ExoCore.withFallback(() => outlier.getLeaderboard(10)),
-      ExoCore.withFallback(() => outlier.currentRoundId()).catch(() => null),
-    ]);
+    const walletContract = new ethers.Contract('0x78aF4B6D78a116dEDB3612A30365718B076894b9', WALLET_ABI, ExoCore.provider);
 
-    // Update round count if available
-    if (roundId !== null) {
-      const el = document.getElementById('outlierRounds');
-      if (el) el.textContent = Number(roundId);
+    // Load all minted tokens and check which ones have played
+    const allTokens = await ExoCore.loadAllTokens();
+    const entries = [];
+
+    const batchSize = 10;
+    for (let i = 0; i < allTokens.length; i += batchSize) {
+      const batch = allTokens.slice(i, i + batchSize);
+      const checks = batch.map(async (t) => {
+        try {
+          const tba = await walletContract.getWalletAddress(t.id);
+          const played = await outlier.hasPlayed(tba);
+          if (played) {
+            const stats = await outlier.getPlayerStats(tba);
+            entries.push({ id: t.id, name: t.name, elo: Number(stats.eloRating), games: Number(stats.gamesPlayed) });
+          }
+        } catch {}
+      });
+      await Promise.all(checks);
     }
 
-    // Load token names for the leaderboard
-    const tokenIds = lb.tokenIds.map(Number).filter(id => id > 0);
-    const elos = lb.elos.map(Number);
+    // Sort by ELO descending
+    entries.sort((a, b) => b.elo - a.elo);
+    const top = entries.slice(0, 10);
 
-    if (tokenIds.length === 0) {
+    if (top.length === 0) {
       document.getElementById('eloBody').innerHTML = '<tr><td colspan="4" class="loading-text">No rankings yet</td></tr>';
       return;
     }
-
-    // Fetch names via registry
-    const tokens = await ExoCore.loadTokenBatch(tokenIds);
-    const rows = tokenIds.map((id, i) => {
-      const t = tokens.find(t => t.id === id) || { name: '', id };
-      const name = t.name || '&mdash;';
+    const rows = top.map((e, i) => {
+      const name = e.name || '&mdash;';
       return `<tr>
         <td class="rank">${i + 1}</td>
-        <td><a href="token.html#${id}" style="color:#00b4d8;text-decoration:none">#${id}</a></td>
+        <td><a href="/token#${e.id}" style="color:#00b4d8;text-decoration:none">#${e.id}</a></td>
         <td class="name">${ExoCore.escHtml(name)}</td>
-        <td class="elo" style="text-align:right">${elos[i]}</td>
+        <td class="elo" style="text-align:right">${e.elo}</td>
       </tr>`;
     });
     document.getElementById('eloBody').innerHTML = rows.join('');

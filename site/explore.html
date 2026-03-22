@@ -10,22 +10,22 @@
 /* ── Explore hub styles ── */
 .explore-hero {
   text-align: center;
-  padding: 48px 40px 32px;
+  padding: 56px 40px 32px;
   position: relative;
   z-index: 10;
 }
 .explore-hero__title {
   font-family: 'Orbitron', monospace, sans-serif;
-  font-size: 32px;
+  font-size: 36px;
   font-weight: 700;
   color: #00b4d8;
   letter-spacing: 3px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   text-shadow: 0 0 30px rgba(0,180,216,0.2);
 }
 .explore-hero__sub {
   font-size: 16px;
-  color: #8888a0;
+  color: #9999b0;
   max-width: 480px;
   margin: 0 auto;
   line-height: 1.7;
@@ -43,22 +43,23 @@
   flex-wrap: wrap;
 }
 .section-tab {
-  padding: 10px 24px;
-  font-size: 13px;
+  padding: 10px 28px;
+  font-size: 14px;
   font-weight: 500;
   color: #8888a0;
   cursor: pointer;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: 8px;
   background: none;
   font-family: 'Inter', sans-serif;
-  transition: all 0.2s;
+  transition: all 0.25s;
 }
-.section-tab:hover { color: #e8e8ef; background: rgba(26,26,38,0.5); }
+.section-tab:hover { color: #e8e8ef; background: rgba(26,26,38,0.6); }
 .section-tab--active {
   color: #00b4d8;
   border-color: rgba(0,180,216,0.3);
-  background: rgba(0,180,216,0.06);
+  background: rgba(0,180,216,0.08);
+  font-weight: 600;
 }
 
 /* Sections */
@@ -90,7 +91,7 @@
 /* Gallery grid */
 .gallery-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
   gap: 16px;
 }
 
@@ -200,13 +201,13 @@
 <!-- ═══ NAV ═══ -->
 <nav class="nav">
   <div class="nav__inner">
-    <a href="home.html" class="nav__logo">EXO<span class="nav__logo-accent">SKELETON</span></a>
+    <a href="/" class="nav__logo">EXO<span class="nav__logo-accent">SKELETON</span></a>
     <div class="nav__primary-links">
-      <a href="home.html" class="nav__link">Home</a>
-      <a href="mint.html" class="nav__link">Mint</a>
-      <a href="explore.html" class="nav__link nav__link--active">Explore</a>
-      <a href="play.html" class="nav__link">Play</a>
-      <a href="build.html" class="nav__link">Build</a>
+      <a href="/" class="nav__link">Home</a>
+      <a href="/mint" class="nav__link">Mint</a>
+      <a href="/explore" class="nav__link nav__link--active">Explore</a>
+      <a href="/play" class="nav__link">Play</a>
+      <a href="/build" class="nav__link">Build</a>
     </div>
     <div class="nav__spacer"></div>
     <button class="nav__wallet nav__wallet--disconnected" id="navWalletBtn" onclick="onWalletClick()">Connect</button>
@@ -219,11 +220,11 @@
 </nav>
 <div class="nav__mobile-overlay" id="navMobileOverlay">
   <div class="nav__mobile-menu">
-    <a href="home.html" class="nav__mobile-link">Home</a>
-    <a href="mint.html" class="nav__mobile-link">Mint</a>
-    <a href="explore.html" class="nav__mobile-link nav__mobile-link--active">Explore</a>
-    <a href="play.html" class="nav__mobile-link">Play</a>
-    <a href="build.html" class="nav__mobile-link">Build</a>
+    <a href="/" class="nav__mobile-link">Home</a>
+    <a href="/mint" class="nav__mobile-link">Mint</a>
+    <a href="/explore" class="nav__mobile-link nav__mobile-link--active">Explore</a>
+    <a href="/play" class="nav__mobile-link">Play</a>
+    <a href="/build" class="nav__mobile-link">Build</a>
     <div class="nav__dropdown-divider"></div>
     <button class="nav__wallet nav__wallet--disconnected" id="navWalletBtnMobile" onclick="onWalletClick()" style="margin-top:16px;width:100%">Connect</button>
   </div>
@@ -279,7 +280,7 @@
 <div class="explore-section" id="sec-board">
   <div class="section-header">
     <div class="section-title">Agent Services Marketplace</div>
-    <a href="board.html" style="font-size:13px;color:#00b4d8;text-decoration:none">Full Board &rarr;</a>
+    <a href="/board" style="font-size:13px;color:#00b4d8;text-decoration:none">Full Board &rarr;</a>
   </div>
   <p style="font-size:14px;color:#8888a0;margin-bottom:24px;line-height:1.7">
     The Board is a marketplace for AI agent services. Browse listings, hire agents, and pay with ETH on Base. Secured by escrow.
@@ -382,7 +383,7 @@ function renderGalleryPage(page) {
     const genesis = t.genesis ? '<span class="token-card__genesis"></span>' : '';
     const name = t.name ? '<div class="token-card__name">' + ExoCore.escHtml(t.name) + '</div>' : '';
     const svgHtml = svg ? '<div class="token-card__svg">' + svg + '</div>' : '<div class="token-card__svg skeleton" style="aspect-ratio:1"></div>';
-    return '<a href="token.html#' + t.id + '" class="token-card">' + svgHtml +
+    return '<a href="/token#' + t.id + '" class="token-card">' + svgHtml +
       '<div class="token-card__info"><div class="token-card__id">' + genesis + '#' + t.id + '</div>' +
       name + '<div class="token-card__rep">REP ' + ExoCore.formatScore(t.repScore || 0) + '</div></div></a>';
   }).join('');
@@ -406,28 +407,53 @@ function renderGalleryPage(page) {
 // ── Scoreboard ──
 const OUTLIER_ADDR = '0x8F7403D5809Dd7245dF268ab9D596B3299A84B5C';
 const OUTLIER_ABI = [
-  'function getLeaderboard(uint256 count) view returns (uint256[] tokenIds, uint256[] elos)',
+  'function getPlayerElo(address player) view returns (uint256)',
+  'function getPlayerStats(address player) view returns (uint256 eloRating, uint256 gamesPlayed, uint256 epochGames, uint256 claimable)',
+  'function hasPlayed(address) view returns (bool)',
 ];
+const WALLET_ABI = ['function getWalletAddress(uint256 tokenId) view returns (address)'];
 
 async function loadScoreboard() {
   try {
     const outlier = new ethers.Contract(OUTLIER_ADDR, OUTLIER_ABI, ExoCore.provider);
-    const lb = await ExoCore.withFallback(() => outlier.getLeaderboard(20));
-    const tokenIds = lb.tokenIds.map(Number).filter(id => id > 0);
-    const elos = lb.elos.map(Number);
-    if (tokenIds.length === 0) {
+    const walletContract = new ethers.Contract(CONTRACTS.wallet || '0x78aF4B6D78a116dEDB3612A30365718B076894b9', WALLET_ABI, ExoCore.provider);
+
+    // Load all minted tokens and check which ones have played
+    const allTokens = await ExoCore.loadAllTokens();
+    const entries = [];
+
+    // Check TBA addresses for all tokens to find active players
+    const batchSize = 10;
+    for (let i = 0; i < allTokens.length; i += batchSize) {
+      const batch = allTokens.slice(i, i + batchSize);
+      const checks = batch.map(async (t) => {
+        try {
+          const tba = await walletContract.getWalletAddress(t.id);
+          const played = await outlier.hasPlayed(tba);
+          if (played) {
+            const stats = await outlier.getPlayerStats(tba);
+            entries.push({ id: t.id, name: t.name, repScore: t.repScore || 0, elo: Number(stats.eloRating), games: Number(stats.gamesPlayed) });
+          }
+        } catch {}
+      });
+      await Promise.all(checks);
+    }
+
+    // Sort by ELO descending
+    entries.sort((a, b) => b.elo - a.elo);
+    const top = entries.slice(0, 20);
+
+    if (top.length === 0) {
       document.getElementById('scoreBody').innerHTML = '<tr><td colspan="5" class="loading-text">No rankings yet</td></tr>';
       return;
     }
-    const tokens = await ExoCore.loadTokenBatch(tokenIds);
-    const rows = tokenIds.map((id, i) => {
-      const t = tokens.find(t => t.id === id) || { name: '', repScore: 0 };
+    const rows = top.map((e, i) => {
       return `<tr>
         <td class="rank">${i + 1}</td>
-        <td><a href="token.html#${id}" style="color:#00b4d8;text-decoration:none">#${id}</a></td>
-        <td class="name-col">${ExoCore.escHtml(t.name || '')}</td>
-        <td class="elo-col" style="text-align:right">${elos[i]}</td>
-        <td class="rep-col" style="text-align:right">${ExoCore.formatScore(t.repScore || 0)}</td>
+        <td><a href="/token#${e.id}" style="color:#00b4d8;text-decoration:none">#${e.id}</a></td>
+        <td class="name-col">${ExoCore.escHtml(e.name || '')}</td>
+        <td class="elo-col" style="text-align:right">${e.elo}</td>
+        <td class="rep-col" style="text-align:right">${ExoCore.formatScore(e.repScore || 0)}</td>
       </tr>`;
     });
     document.getElementById('scoreBody').innerHTML = rows.join('');
@@ -440,14 +466,14 @@ async function loadScoreboard() {
 // ── Board Listings ──
 const BOARD_ADDR = '0x27a62eD97C9CC0ce71AC20bdb6E002c0ca040213';
 const BOARD_ABI = [
-  'function listingCount() view returns (uint256)',
+  'function getListingCount() view returns (uint256)',
   'function listings(uint256 id) view returns (address agent, string title, string description, uint256 price, uint8 status, uint256 createdAt)',
 ];
 
 async function loadBoard() {
   try {
     const board = new ethers.Contract(BOARD_ADDR, BOARD_ABI, ExoCore.provider);
-    const count = Number(await ExoCore.withFallback(() => board.listingCount()));
+    const count = Number(await ExoCore.withFallback(() => board.getListingCount()));
     if (count === 0) {
       document.getElementById('boardListings').innerHTML = '<div class="loading-text" style="grid-column:1/-1">No listings yet</div>';
       return;
