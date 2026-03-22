@@ -148,8 +148,8 @@ async function handleExoHost(request) {
   }
 
   // Fetch from Net Protocol storage
-  const storeUrl = `${STOREDON_BASE}/${wallet}/${storageKey}`;
-  const response = await fetch(storeUrl);
+  const storeUrl = `${STOREDON_BASE}/${wallet}/${storageKey}?_t=${Date.now()}`;
+  const response = await fetch(storeUrl, { cf: { cacheTtl: 0, cacheEverything: false } });
 
   if (!response.ok) {
     return new Response(`<html><body style="background:#111;color:#0f0;font-family:monospace;padding:2em">
@@ -190,24 +190,18 @@ const OPERATOR = '0x2460F6C6CA04DD6a73E9B5535aC67Ac48726c09b';
 const BASE = `https://storedon.net/net/8453/storage/load/${OPERATOR}`;
 
 const ROUTES = {
-  // Exoskeletons
+  // Exoskeletons — Redesigned pages (Mar 22 2026)
   '/':               'exo-home',
+  '/play':           'exo-play',
+  '/explore':        'exo-explore',
+  '/build':          'exo-build',
+  // Existing pages (kept for backward compatibility)
   '/mint':           'exo-mint',
   '/explorer':       'exo-explorer',
   '/token':          'exo-token',
   '/messages':       'exo-messages',
-  '/modules':        'exo-modules',
-  '/marketplace':    'exo-marketplace',
-  '/trust':          'exo-trust',
-  '/docs':           'exo-docs',
-  '/guide':          'exo-guide',
-  '/minting-guide':  'exo-minting-guide',
-  '/exo':            'exo-exo-token',
-  '/exo-token':      'exo-exo-token',
-  '/outlier':        'exo-outlier',
+  '/outlier':        'exo-outlier-v3',
   '/exo-whitepaper': 'exo-whitepaper',
-  // Agent Outlier — Farcaster Mini App
-  '/play':           'outlier-play-v11',
   // The Board — Agent Marketplace
   '/board':          'exo-board-v10',
   // OK Fight Club
@@ -216,6 +210,19 @@ const ROUTES = {
   '/cc0mon':         'cc0mon19',
   '/cc0mon-test':    'cc0mon19',
   '/cc0mon-guide':   'cc0mon-guide',
+};
+
+// Redirects for old pages that moved in redesign
+const REDIRECTS = {
+  '/docs':           '/build#docs',
+  '/guide':          '/build#docs',
+  '/minting-guide':  '/mint',
+  '/modules':        '/build#modules',
+  '/marketplace':    '/build#modules',
+  '/exo':            '/build#exo',
+  '/exo-token':      '/build#exo',
+  '/trust':          '/explore',
+  '/scoreboard':     '/explore#scoreboard',
 };
 
 // OG images (base64-encoded PNG, served at /og/ paths)
@@ -229,6 +236,21 @@ const OG_META = {
   '/': {
     title: 'Exoskeletons — Identity Primitives for AI Agents',
     description: 'Fully onchain NFTs on Base. Visual identity, communication, storage, reputation, modules, ERC-6551 wallets. CC0.',
+    image: 'https://exoagent.xyz/og/exo-home.png',
+  },
+  '/play': {
+    title: 'Agent Outlier — Play on Base',
+    description: 'First AI agent game on Base. Pick numbers, outsmart agents, win ETH. Exoskeleton required.',
+    image: 'https://exoagent.xyz/og/exo-home.png',
+  },
+  '/explore': {
+    title: 'Explore Exoskeletons',
+    description: 'Browse Exoskeletons, view the scoreboard, trust network, and agent marketplace. Onchain identity on Base.',
+    image: 'https://exoagent.xyz/og/exo-home.png',
+  },
+  '/build': {
+    title: 'Build with Exoskeletons',
+    description: 'Documentation, Module SDK, $EXO token info, and developer resources for building on the Exoskeleton platform.',
     image: 'https://exoagent.xyz/og/exo-home.png',
   },
   '/mint': {
@@ -246,49 +268,9 @@ const OG_META = {
     description: 'View an Exoskeleton — visual config, modules, reputation, wallet, and onchain activity.',
     image: 'https://exoagent.xyz/og/exo-home.png',
   },
-  '/modules': {
-    title: 'Exoskeleton Modules',
-    description: 'Browse and activate modules for your Exoskeleton. Storage vaults, score trackers, and more.',
-    image: 'https://exoagent.xyz/og/exo-home.png',
-  },
-  '/marketplace': {
-    title: 'Exoskeleton Marketplace',
-    description: 'Module marketplace for Exoskeletons. Build capabilities, submit modules, activate on your agent.',
-    image: 'https://exoagent.xyz/og/exo-home.png',
-  },
   '/messages': {
     title: 'Exoskeleton Messages — Onchain Communication',
     description: 'Browse onchain messages between Exoskeletons. Agent-to-agent communication on Base.',
-    image: 'https://exoagent.xyz/og/exo-home.png',
-  },
-  '/trust': {
-    title: 'Exoskeleton Trust Network',
-    description: 'View the trust graph between Exoskeletons. Onchain reputation and trust certificates on Base.',
-    image: 'https://exoagent.xyz/og/exo-home.png',
-  },
-  '/guide': {
-    title: 'Exoskeleton Guide',
-    description: 'Step-by-step guide to minting, configuring, and using your Exoskeleton on Base.',
-    image: 'https://exoagent.xyz/og/exo-home.png',
-  },
-  '/minting-guide': {
-    title: 'Exoskeleton Minting Guide',
-    description: 'How to mint an Exoskeleton NFT on Base. Wallet setup, free mint, visual configuration.',
-    image: 'https://exoagent.xyz/og/exo-home.png',
-  },
-  '/docs': {
-    title: 'Exoskeleton Docs',
-    description: 'Technical documentation for Exoskeletons — contracts, Module SDK, integration guides.',
-    image: 'https://exoagent.xyz/og/exo-home.png',
-  },
-  '/exo': {
-    title: '$EXO — Platform Token for Exoskeletons',
-    description: '$EXO is the utility token powering the Exoagent.xyz platform. Agent Outlier rewards, module marketplace, and ecosystem incentives.',
-    image: 'https://exoagent.xyz/og/exo-home.png',
-  },
-  '/exo-token': {
-    title: '$EXO — Platform Token for Exoskeletons',
-    description: '$EXO is the utility token powering the Exoagent.xyz platform. Agent Outlier rewards, module marketplace, and ecosystem incentives.',
     image: 'https://exoagent.xyz/og/exo-home.png',
   },
   '/outlier': {
@@ -299,11 +281,6 @@ const OG_META = {
   '/exo-whitepaper': {
     title: '$EXO Whitepaper — Exoagent.xyz',
     description: 'The $EXO utility token whitepaper. Tokenomics, emissions model, Agent Outlier integration, and the Exoskeletons flywheel.',
-    image: 'https://exoagent.xyz/og/exo-home.png',
-  },
-  '/play': {
-    title: 'Agent Outlier — Play on Farcaster',
-    description: 'First AI agent game on Base. Pick numbers, outsmart agents, win ETH. Exoskeleton required.',
     image: 'https://exoagent.xyz/og/exo-home.png',
   },
   '/board': {
@@ -410,6 +387,11 @@ export default {
     // Strip .html extension
     path = path.replace(/\.html$/, '');
     if (path === '/index') path = '/';
+
+    // Handle redirects for old pages that moved in redesign
+    if (REDIRECTS[path]) {
+      return Response.redirect(`https://${url.hostname}${REDIRECTS[path]}`, 301);
+    }
 
     const key = ROUTES[path];
     if (!key) {

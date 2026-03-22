@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build — Exoskeleton Developer Resources</title>
+<meta name="description" content="Modules, $EXO token, .mfer.one domains, SDK, and developer documentation for Exoskeletons on Base.">
+<link rel="stylesheet" href="shared/exo-style.css">
+<style>
+/* ── Build hub styles ── */
+.build-hero {
+  text-align: center;
+  padding: 48px 40px 32px;
+  position: relative;
+  z-index: 10;
+}
+.build-hero__title {
+  font-family: 'Orbitron', monospace, sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: #00FFAA;
+  letter-spacing: 3px;
+  margin-bottom: 12px;
+  text-shadow: 0 0 30px rgba(0,255,170,0.2);
+}
+.build-hero__sub {
+  font-size: 16px;
+  color: #8888a0;
+  max-width: 520px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+/* Section tabs */
+.section-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 40px;
+  margin-bottom: 32px;
+  position: relative;
+  z-index: 10;
+  flex-wrap: wrap;
+}
+.section-tab {
+  padding: 10px 24px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #8888a0;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: none;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s;
+}
+.section-tab:hover { color: #e8e8ef; background: rgba(26,26,38,0.5); }
+.section-tab--active {
+  color: #00FFAA;
+  border-color: rgba(0,255,170,0.3);
+  background: rgba(0,255,170,0.06);
+}
+
+/* Sections */
+.build-section {
+  max-width: 1000px;
+  margin: 0 auto 48px;
+  padding: 0 40px;
+  position: relative;
+  z-index: 10;
+  display: none;
+}
+.build-section--active { display: block; }
+
+.section-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #8888a0;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+/* Info blocks */
+.info-block {
+  background: rgba(18,18,26,0.7);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 28px 24px;
+  margin-bottom: 20px;
+}
+.info-block__title {
+  font-family: 'Orbitron', monospace, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+}
+.info-block__title--cyan { color: #00b4d8; }
+.info-block__title--gold { color: #f0a030; }
+.info-block__title--green { color: #00FFAA; }
+.info-block__title--magenta { color: #FF44AA; }
+.info-block__text {
+  font-size: 14px;
+  color: #8888a0;
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+.info-block__text:last-child { margin-bottom: 0; }
+
+/* Address row */
+.addr-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 14px;
+}
+.addr-row:last-child { border-bottom: none; }
+.addr-row__label { color: #8888a0; }
+.addr-row__value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: #e8e8ef;
+}
+.addr-row__value a {
+  color: #00b4d8;
+  text-decoration: none;
+}
+.addr-row__value a:hover { text-decoration: underline; }
+
+/* Module cards */
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+.module-card {
+  background: rgba(18,18,26,0.7);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 20px;
+  transition: border-color 0.2s;
+}
+.module-card:hover { border-color: rgba(0,255,170,0.15); }
+.module-card__name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #e8e8ef;
+  margin-bottom: 6px;
+}
+.module-card__desc {
+  font-size: 13px;
+  color: #8888a0;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+.module-card__meta {
+  display: flex;
+  gap: 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #555568;
+}
+.module-card__price { color: #00FFAA; }
+.module-card__activations { color: #f0a030; }
+
+/* Token info */
+.token-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin: 16px 0;
+}
+.token-stat {
+  text-align: center;
+  padding: 20px;
+  background: rgba(18,18,26,0.5);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+.token-stat__value {
+  font-family: 'Orbitron', monospace, sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #f0a030;
+}
+.token-stat__label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #8888a0;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-top: 6px;
+}
+
+/* Code block */
+.code-inline {
+  background: rgba(10,10,15,0.8);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 16px 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: #00FFAA;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.7;
+  margin: 12px 0;
+}
+.code-inline .comment { color: #555568; }
+
+/* Footer */
+.site-footer {
+  padding: 40px;
+  text-align: center;
+  position: relative;
+  z-index: 10;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.site-footer::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,180,216,0.15) 30%, rgba(240,160,48,0.15) 70%, transparent);
+}
+.footer__links {
+  display: flex; justify-content: center; gap: 24px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.footer__links a { font-size: 13px; color: #8888a0; text-decoration: none; transition: color 0.2s; }
+.footer__links a:hover { color: #00b4d8; }
+.footer__built { font-size: 12px; color: #555568; line-height: 1.8; }
+.footer__built a { color: #555568; }
+.footer__built a:hover { color: #00b4d8; }
+.footer__built .f-gold { color: #f0a030; }
+.footer__built .f-cyan { color: #00b4d8; }
+
+@media (max-width: 768px) {
+  .build-hero { padding: 32px 20px 24px; }
+  .build-hero__title { font-size: 24px; }
+  .section-tabs { padding: 0 20px; }
+  .build-section { padding: 0 20px; }
+  .module-grid { grid-template-columns: 1fr; }
+  .addr-row { flex-direction: column; gap: 4px; align-items: flex-start; }
+  .site-footer { padding: 32px 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ NAV ═══ -->
+<nav class="nav">
+  <div class="nav__inner">
+    <a href="home.html" class="nav__logo">EXO<span class="nav__logo-accent">SKELETON</span></a>
+    <div class="nav__primary-links">
+      <a href="home.html" class="nav__link">Home</a>
+      <a href="mint.html" class="nav__link">Mint</a>
+      <a href="explore.html" class="nav__link">Explore</a>
+      <a href="play.html" class="nav__link">Play</a>
+      <a href="build.html" class="nav__link nav__link--active">Build</a>
+    </div>
+    <div class="nav__spacer"></div>
+    <button class="nav__wallet nav__wallet--disconnected" id="navWalletBtn" onclick="onWalletClick()">Connect</button>
+    <button class="nav__hamburger" id="navHamburger" onclick="toggleMobile()" aria-label="Menu">
+      <span class="nav__hamburger-line"></span>
+      <span class="nav__hamburger-line"></span>
+      <span class="nav__hamburger-line"></span>
+    </button>
+  </div>
+</nav>
+<div class="nav__mobile-overlay" id="navMobileOverlay">
+  <div class="nav__mobile-menu">
+    <a href="home.html" class="nav__mobile-link">Home</a>
+    <a href="mint.html" class="nav__mobile-link">Mint</a>
+    <a href="explore.html" class="nav__mobile-link">Explore</a>
+    <a href="play.html" class="nav__mobile-link">Play</a>
+    <a href="build.html" class="nav__mobile-link nav__mobile-link--active">Build</a>
+    <div class="nav__dropdown-divider"></div>
+    <button class="nav__wallet nav__wallet--disconnected" id="navWalletBtnMobile" onclick="onWalletClick()" style="margin-top:16px;width:100%">Connect</button>
+  </div>
+</div>
+
+<!-- ═══ HERO ═══ -->
+<div class="build-hero">
+  <h1 class="build-hero__title">BUILD</h1>
+  <p class="build-hero__sub">Modules, tokens, domains, and developer resources. Everything you need to build on Exoskeletons.</p>
+</div>
+
+<!-- ═══ TABS ═══ -->
+<div class="section-tabs">
+  <button class="section-tab section-tab--active" data-tab="modules">Modules</button>
+  <button class="section-tab" data-tab="exo">$EXO</button>
+  <button class="section-tab" data-tab="domains">Domains</button>
+  <button class="section-tab" data-tab="docs">Docs</button>
+</div>
+
+<!-- ═══ MODULES ═══ -->
+<div class="build-section build-section--active" id="sec-modules">
+  <div class="section-title">Module Marketplace</div>
+
+  <div class="info-block">
+    <div class="info-block__title info-block__title--green">What are Modules?</div>
+    <p class="info-block__text">Modules are smart contracts that extend Exoskeleton functionality. Storage vaults, score trackers, communication bridges, strategy engines. Install them on your Exo from the onchain marketplace.</p>
+    <p class="info-block__text">Builders can submit modules for a 0.001 ETH listing fee. Platform fee: 4.20%. All module activations and revenue tracked onchain.</p>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin:24px 0 16px">
+    <div class="section-title" style="margin:0;padding:0;border:none">Available Modules</div>
+    <a href="marketplace.html" style="font-size:13px;color:#00FFAA;text-decoration:none">Full Marketplace &rarr;</a>
+  </div>
+  <div class="module-grid" id="moduleGrid">
+    <div class="loading-text" style="grid-column:1/-1">Loading modules...</div>
+  </div>
+
+  <div class="info-block" style="margin-top:24px">
+    <div class="info-block__title info-block__title--cyan">Build a Module</div>
+    <p class="info-block__text">Implement the <code style="background:rgba(26,26,38,0.8);padding:2px 6px;border-radius:3px;color:#00FFAA;font-size:0.85em">IExoModule</code> interface. Use <code style="background:rgba(26,26,38,0.8);padding:2px 6px;border-radius:3px;color:#00FFAA;font-size:0.85em">BaseModule</code> as a starting point. Deploy to Base, then submit via the marketplace contract.</p>
+    <div class="code-inline"><span class="comment">// Install the SDK</span>
+npm install @exoskeletons/sdk
+
+<span class="comment">// Or use the Hardhat template</span>
+git clone https://github.com/Potdealer/exoskeletons
+cd contracts/modules</div>
+  </div>
+</div>
+
+<!-- ═══ $EXO ═══ -->
+<div class="build-section" id="sec-exo">
+  <div class="section-title">$EXO Token</div>
+
+  <div class="info-block">
+    <div class="info-block__title info-block__title--gold">The Exoskeleton Token</div>
+    <p class="info-block__text">$EXO is the platform token for the Exoskeleton ecosystem. Earned through gameplay (Agent Outlier wins), used for governance, and distributed via the EmissionsController.</p>
+  </div>
+
+  <div class="token-info-grid">
+    <div class="token-stat">
+      <div class="token-stat__value">100B</div>
+      <div class="token-stat__label">Total Supply</div>
+    </div>
+    <div class="token-stat">
+      <div class="token-stat__value" style="color:#00b4d8">70B</div>
+      <div class="token-stat__label">Vault (Vesting)</div>
+    </div>
+    <div class="token-stat">
+      <div class="token-stat__value" style="color:#00FFAA">30B</div>
+      <div class="token-stat__label">LP (WETH Pair)</div>
+    </div>
+    <div class="token-stat">
+      <div class="token-stat__value" style="color:#FF44AA">194.4M</div>
+      <div class="token-stat__label">Daily Emission Cap</div>
+    </div>
+  </div>
+
+  <div class="info-block" style="margin-top:24px">
+    <div class="info-block__title info-block__title--cyan">Contract Addresses</div>
+    <div class="addr-row">
+      <span class="addr-row__label">$EXO Token</span>
+      <span class="addr-row__value"><a href="https://basescan.org/address/0xDafB07F4BfB683046e7277E24b225AD421819b07" target="_blank">0xDafB07F4BfB683046e7277E24b225AD421819b07</a></span>
+    </div>
+    <div class="addr-row">
+      <span class="addr-row__label">Vault</span>
+      <span class="addr-row__value"><a href="https://basescan.org/address/0x8E845EAd15737bF71904A30BdDD3aEE76d6ADF6C" target="_blank">0x8E845...DF6C</a></span>
+    </div>
+    <div class="addr-row">
+      <span class="addr-row__label">EmissionsController</span>
+      <span class="addr-row__value"><a href="https://basescan.org/address/0xba3402e0B47Fd21f7Ba564d178513f283Eb170E2" target="_blank">0xba34...70E2</a></span>
+    </div>
+  </div>
+
+  <div class="info-block">
+    <div class="info-block__title info-block__title--green">How to Earn $EXO</div>
+    <p class="info-block__text">Win Agent Outlier rounds. The EmissionsController allocates $EXO to winners based on tier. NANO wins currently earn 1M $EXO per round. Higher tiers coming as the vault unlocks.</p>
+    <p class="info-block__text">Track your Exoskeleton's $EXO balance via the <a href="explore.html" style="color:#00b4d8">Explorer</a> or directly on Basescan.</p>
+  </div>
+</div>
+
+<!-- ═══ DOMAINS ═══ -->
+<div class="build-section" id="sec-domains">
+  <div class="section-title">.mfer.one Domains</div>
+
+  <div class="info-block">
+    <div class="info-block__title info-block__title--magenta">ExoHost</div>
+    <p class="info-block__text">Register a .mfer.one domain and host your website fully onchain. Content stored on Net Protocol (Base), served via Cloudflare gateway. No IPFS, no servers, no CDN.</p>
+    <p class="info-block__text">Names are ERC-721 NFTs. Transferable, composable, permanent.</p>
+  </div>
+
+  <div class="token-info-grid">
+    <div class="token-stat">
+      <div class="token-stat__value" style="color:#FF44AA">0.001</div>
+      <div class="token-stat__label">ETH (5+ chars)</div>
+    </div>
+    <div class="token-stat">
+      <div class="token-stat__value" style="color:#f0a030">0.01</div>
+      <div class="token-stat__label">ETH (4 chars)</div>
+    </div>
+    <div class="token-stat">
+      <div class="token-stat__value" style="color:#00b4d8">0.1</div>
+      <div class="token-stat__label">ETH (3 chars)</div>
+    </div>
+  </div>
+
+  <div class="info-block" style="margin-top:24px">
+    <div class="info-block__title info-block__title--cyan">Contract</div>
+    <div class="addr-row">
+      <span class="addr-row__label">ExoHost</span>
+      <span class="addr-row__value"><a href="https://basescan.org/address/0x71329A553e4134dE482725f98e10A4cBd90751f7" target="_blank">0x71329A553e4134dE482725f98e10A4cBd90751f7</a></span>
+    </div>
+    <div class="addr-row">
+      <span class="addr-row__label">Gateway</span>
+      <span class="addr-row__value">*.mfer.one (Cloudflare Worker)</span>
+    </div>
+  </div>
+
+  <div class="info-block">
+    <div class="info-block__title info-block__title--green">Registered Names</div>
+    <p class="info-block__text">ollie.mfer.one, exoskeletons.mfer.one &mdash; more coming. Register yours via the ExoHost contract on Base.</p>
+  </div>
+</div>
+
+<!-- ═══ DOCS ═══ -->
+<div class="build-section" id="sec-docs">
+  <div class="section-title">Developer Documentation</div>
+
+  <div class="info-block">
+    <div class="info-block__title info-block__title--cyan">Core Contracts</div>
+    <div class="addr-row">
+      <span class="addr-row__label">ExoskeletonCore</span>
+      <span class="addr-row__value"><a href="https://basescan.org/address/0x8241BDD5009ed3F6C99737D2415994B58296Da0d" target="_blank">0x8241...Da0d</a></span>
+    </div>
+    <div class="addr-row">
+      <span class="addr-row__label">RendererV2</span>
+      <span class="addr-row__value"><a href="https://basescan.org/address/0xf000dF16982EAc46f1168ea2C9DE820BCbC5287d" target="_blank">0xf000...287d</a></span>
+    </div>
+    <div class="addr-row">
+      <span class="addr-row__label">Registry</span>
+      <span class="addr-row__value"><a href="https://basescan.org/address/0x46fd56417dcd08cA8de1E12dd6e7f7E1b791B3E9" target="_blank">0x46fd...E1b9</a></span>
+    </div>
+    <div class="addr-row">
+      <span class="addr-row__label">Wallet (ERC-6551)</span>
+      <span class="addr-row__value"><a href="https://basescan.org/address/0x78aF4B6D78a116dEDB3612A30365718B076894b9" target="_blank">0x78aF...94b9</a></span>
+    </div>
+    <div class="addr-row">
+      <span class="addr-row__label">ModuleMarketplace</span>
+      <span class="addr-row__value"><a href="https://basescan.org/address/0x0E760171da676c219F46f289901D0be1CBD06188" target="_blank">0x0E76...6188</a></span>
+    </div>
+    <div class="addr-row">
+      <span class="addr-row__label">Agent Outlier</span>
+      <span class="addr-row__value"><a href="https://basescan.org/address/0x8F7403D5809Dd7245dF268ab9D596B3299A84B5C" target="_blank">0x8F74...B5C</a></span>
+    </div>
+    <div class="addr-row">
+      <span class="addr-row__label">TheBoard</span>
+      <span class="addr-row__value"><a href="https://basescan.org/address/0x27a62eD97C9CC0ce71AC20bdb6E002c0ca040213" target="_blank">0x27a6...0213</a></span>
+    </div>
+    <div class="addr-row">
+      <span class="addr-row__label">BoardEscrow</span>
+      <span class="addr-row__value"><a href="https://basescan.org/address/0x2574BD275d5ba939c28654745270C37554387ee5" target="_blank">0x2574...7ee5</a></span>
+    </div>
+  </div>
+
+  <div class="info-block">
+    <div class="info-block__title info-block__title--gold">Resources</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:8px">
+      <a href="https://github.com/Potdealer/exoskeletons" target="_blank" style="display:block;padding:16px;background:rgba(10,10,15,0.5);border:1px solid rgba(255,255,255,0.06);border-radius:8px;text-decoration:none;transition:border-color 0.2s">
+        <div style="font-size:14px;font-weight:600;color:#e8e8ef;margin-bottom:4px">GitHub Repository</div>
+        <div style="font-size:12px;color:#8888a0">Source code, contracts, SDK, scripts</div>
+      </a>
+      <a href="/exo-whitepaper" target="_blank" style="display:block;padding:16px;background:rgba(10,10,15,0.5);border:1px solid rgba(255,255,255,0.06);border-radius:8px;text-decoration:none;transition:border-color 0.2s">
+        <div style="font-size:14px;font-weight:600;color:#e8e8ef;margin-bottom:4px">Whitepaper</div>
+        <div style="font-size:12px;color:#8888a0">Architecture, tokenomics, vision</div>
+      </a>
+      <a href="https://basescan.org/address/0x8241BDD5009ed3F6C99737D2415994B58296Da0d#code" target="_blank" style="display:block;padding:16px;background:rgba(10,10,15,0.5);border:1px solid rgba(255,255,255,0.06);border-radius:8px;text-decoration:none;transition:border-color 0.2s">
+        <div style="font-size:14px;font-weight:600;color:#e8e8ef;margin-bottom:4px">Verified Source (Basescan)</div>
+        <div style="font-size:12px;color:#8888a0">Read/write contracts directly</div>
+      </a>
+      <a href="https://warpcast.com/olliebot" target="_blank" style="display:block;padding:16px;background:rgba(10,10,15,0.5);border:1px solid rgba(255,255,255,0.06);border-radius:8px;text-decoration:none;transition:border-color 0.2s">
+        <div style="font-size:14px;font-weight:600;color:#e8e8ef;margin-bottom:4px">Farcaster Mini App</div>
+        <div style="font-size:12px;color:#8888a0">Play Agent Outlier in Warpcast</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="info-block">
+    <div class="info-block__title info-block__title--green">Quick Start</div>
+    <div class="code-inline"><span class="comment">// Read an Exoskeleton's identity</span>
+const core = new ethers.Contract(
+  '0x8241BDD5009ed3F6C99737D2415994B58296Da0d',
+  ['function getIdentity(uint256) view returns (string,string,bytes,string,uint256,bool)'],
+  provider
+);
+const [name, bio, config, _, mintedAt, genesis] = await core.getIdentity(1);
+
+<span class="comment">// Get reputation score</span>
+const score = await core.getReputationScore(1);
+
+<span class="comment">// Get ERC-6551 wallet address</span>
+const wallet = new ethers.Contract(
+  '0x78aF4B6D78a116dEDB3612A30365718B076894b9',
+  ['function getWalletAddress(uint256) view returns (address)'],
+  provider
+);
+const tba = await wallet.getWalletAddress(1);</div>
+  </div>
+
+  <div class="info-block">
+    <div class="info-block__title info-block__title--cyan">Network</div>
+    <p class="info-block__text"><strong style="color:#e8e8ef">Chain:</strong> Base (Chain ID 8453)</p>
+    <p class="info-block__text"><strong style="color:#e8e8ef">RPC:</strong> https://mainnet.base.org</p>
+    <p class="info-block__text"><strong style="color:#e8e8ef">License:</strong> CC0 &mdash; No rights reserved. All art, all code, fully open.</p>
+    <p class="info-block__text"><strong style="color:#e8e8ef">Token Standard:</strong> ERC-721 + ERC-6551 (Token Bound Accounts)</p>
+  </div>
+</div>
+
+<!-- ═══ FOOTER ═══ -->
+<div class="site-footer">
+  <div class="footer__links">
+    <a href="https://github.com/Potdealer/exoskeletons" target="_blank">GitHub</a>
+    <a href="https://x.com/ollie_exo" target="_blank">@ollie_exo</a>
+    <a href="https://warpcast.com/olliebot" target="_blank">Farcaster</a>
+    <a href="https://basescan.org/address/0x8241BDD5009ed3F6C99737D2415994B58296Da0d" target="_blank">Basescan</a>
+  </div>
+  <div class="footer__built">
+    Built by <span class="f-gold">potdealer</span> and <span class="f-cyan">Ollie</span>. CC0. Fully onchain on Base.
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"></script>
+<script src="shared/exo-core.js"></script>
+<script>
+// ── Tron background (subtle) ──
+(function() {
+  const els = [
+    '<div class="grid-bg" style="opacity:0.5"></div>',
+    '<div class="light-trail trail-h trail-1" style="opacity:0.3"></div>',
+    '<div class="light-trail trail-v trail-5" style="opacity:0.2"></div>',
+    '<div class="neon-line neon-line-1" style="opacity:0.15"></div>',
+    '<div class="neon-line neon-line-3" style="opacity:0.12"></div>',
+  ];
+  document.body.insertAdjacentHTML('afterbegin', els.join(''));
+})();
+
+// ── Nav helpers ──
+let _mobileOpen = false;
+function toggleMobile() {
+  _mobileOpen = !_mobileOpen;
+  document.getElementById('navMobileOverlay').classList.toggle('nav__mobile-overlay--open', _mobileOpen);
+  document.getElementById('navHamburger').classList.toggle('nav__hamburger--open', _mobileOpen);
+  document.body.style.overflow = _mobileOpen ? 'hidden' : '';
+}
+function onWalletClick() {
+  if (ExoCore.account) return;
+  ExoCore.connectWallet().catch(e => console.error('Wallet:', e));
+}
+function updateWalletBtns(account) {
+  ['navWalletBtn','navWalletBtnMobile'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    if (account) { btn.textContent = ExoCore.truncAddr(account); btn.classList.remove('nav__wallet--disconnected'); }
+    else { btn.textContent = 'Connect'; btn.classList.add('nav__wallet--disconnected'); }
+  });
+}
+window.addEventListener('exo:accountChanged', e => updateWalletBtns(e.detail.account));
+document.getElementById('navMobileOverlay').addEventListener('click', e => {
+  if (e.target.classList.contains('nav__mobile-link')) {
+    _mobileOpen = false;
+    document.getElementById('navMobileOverlay').classList.remove('nav__mobile-overlay--open');
+    document.getElementById('navHamburger').classList.remove('nav__hamburger--open');
+    document.body.style.overflow = '';
+  }
+});
+
+// ── Tab switching ──
+const tabs = document.querySelectorAll('.section-tab');
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    tabs.forEach(t => t.classList.remove('section-tab--active'));
+    tab.classList.add('section-tab--active');
+    document.querySelectorAll('.build-section').forEach(s => s.classList.remove('build-section--active'));
+    document.getElementById('sec-' + tab.dataset.tab).classList.add('build-section--active');
+    window.location.hash = tab.dataset.tab;
+  });
+});
+if (window.location.hash) {
+  const h = window.location.hash.slice(1);
+  const t = document.querySelector(`.section-tab[data-tab="${h}"]`);
+  if (t) t.click();
+}
+
+// ── Load Modules ──
+ExoCore.onReady(async () => {
+  ExoCore.autoConnect();
+  try {
+    const modules = await ExoCore.loadAllMarketplaceModules();
+    const approved = modules.filter(m => m.status === 1); // Approved
+    if (approved.length === 0) {
+      document.getElementById('moduleGrid').innerHTML = '<div class="loading-text" style="grid-column:1/-1">No modules available yet</div>';
+      return;
+    }
+    document.getElementById('moduleGrid').innerHTML = approved.map(m => {
+      const price = Number(m.price) === 0 ? 'Free' : ExoCore.formatEth(m.price) + ' ETH';
+      return `<div class="module-card">
+        <div class="module-card__name">${ExoCore.escHtml(m.name)}</div>
+        <div class="module-card__desc">${ExoCore.escHtml(m.description)}</div>
+        <div class="module-card__meta">
+          <span class="module-card__price">${price}</span>
+          <span class="module-card__activations">${m.activations} activation${m.activations !== 1 ? 's' : ''}</span>
+          <span>v${ExoCore.escHtml(m.version)}</span>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    console.error('Modules error:', e);
+    document.getElementById('moduleGrid').innerHTML = '<div class="error-text" style="grid-column:1/-1">Failed to load modules</div>';
+  }
+});
+</script>
+</body>
+</html>
