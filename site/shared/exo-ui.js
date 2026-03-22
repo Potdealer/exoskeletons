@@ -206,6 +206,79 @@ const ExoUI = {
     if (el) el.style.display = 'none';
   },
 
+  // ── Toast Notifications ──
+  _toastContainer: null,
+  _toastId: 0,
+
+  _ensureToastContainer() {
+    if (this._toastContainer) return this._toastContainer;
+    const c = document.createElement('div');
+    c.className = 'toast-container';
+    document.body.appendChild(c);
+    this._toastContainer = c;
+    return c;
+  },
+
+  /**
+   * Show a toast notification.
+   * @param {string} msg - HTML message content
+   * @param {'success'|'error'|'pending'|'info'} type
+   * @param {number} [duration=5000] - Auto-dismiss in ms (0 = manual only)
+   * @returns {string} toast ID for manual dismissal
+   */
+  toast(msg, type = 'info', duration = 5000) {
+    const container = this._ensureToastContainer();
+    const id = 'toast-' + (++this._toastId);
+    const icons = { success: '\u2713', error: '\u2717', pending: '\u21BB', info: '\u2139' };
+
+    const el = document.createElement('div');
+    el.className = 'toast toast--' + type;
+    el.id = id;
+    el.innerHTML = [
+      '<span class="toast__icon">' + (icons[type] || '') + '</span>',
+      '<span class="toast__msg">' + msg + '</span>',
+      '<button class="toast__close" onclick="ExoUI.dismissToast(\'' + id + '\')">&times;</button>',
+    ].join('');
+
+    container.appendChild(el);
+
+    if (duration > 0) {
+      setTimeout(() => this.dismissToast(id), duration);
+    }
+
+    return id;
+  },
+
+  /**
+   * Dismiss a toast by ID.
+   * @param {string} id
+   */
+  dismissToast(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.add('toast--exiting');
+    setTimeout(() => el.remove(), 300);
+  },
+
+  /**
+   * Update an existing toast (e.g., pending -> success).
+   * @param {string} id
+   * @param {string} msg
+   * @param {'success'|'error'|'pending'|'info'} type
+   * @param {number} [duration=5000]
+   */
+  updateToast(id, msg, type, duration = 5000) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const icons = { success: '\u2713', error: '\u2717', pending: '\u21BB', info: '\u2139' };
+    el.className = 'toast toast--' + type;
+    el.querySelector('.toast__icon').textContent = icons[type] || '';
+    el.querySelector('.toast__msg').innerHTML = msg;
+    if (duration > 0) {
+      setTimeout(() => this.dismissToast(id), duration);
+    }
+  },
+
   // ── Tron Background Injection ──
   injectTronBackground() {
     const els = [
