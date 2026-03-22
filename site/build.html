@@ -151,8 +151,9 @@
   border-radius: 8px;
   padding: 20px;
   transition: border-color 0.2s;
+  cursor: pointer;
 }
-.module-card:hover { border-color: rgba(0,255,170,0.15); }
+.module-card:hover { border-color: rgba(0,255,170,0.25); }
 .module-card__name {
   font-size: 15px;
   font-weight: 600;
@@ -174,6 +175,71 @@
 }
 .module-card__price { color: #00FFAA; }
 .module-card__activations { color: #f0a030; }
+
+/* Module detail modal */
+.module-modal {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.8); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+  opacity: 0; transition: opacity 0.2s;
+}
+.module-modal--visible { opacity: 1; }
+.module-modal__content {
+  background: #12121a; border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px; padding: 32px; max-width: 500px; width: 90%;
+  position: relative; max-height: 90vh; overflow-y: auto;
+}
+.module-modal__close {
+  position: absolute; top: 12px; right: 16px;
+  background: none; border: none; color: #8888a0;
+  font-size: 22px; cursor: pointer; padding: 4px 8px;
+  line-height: 1;
+}
+.module-modal__close:hover { color: #e8e8ef; }
+.module-modal__name {
+  font-family: 'Orbitron', monospace, sans-serif;
+  font-size: 20px; font-weight: 700; color: #00FFAA;
+  margin-bottom: 12px; letter-spacing: 1px;
+}
+.module-modal__desc {
+  font-size: 14px; color: #9999b0; line-height: 1.7;
+  margin-bottom: 20px;
+}
+.module-modal__badge {
+  display: inline-block; padding: 3px 10px; border-radius: 4px;
+  font-size: 11px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; font-family: 'JetBrains Mono', monospace;
+}
+.module-modal__badge--approved { background: rgba(0,255,170,0.12); color: #00FFAA; }
+.module-modal__badge--active { background: rgba(0,180,216,0.12); color: #00b4d8; }
+.module-modal__rows { margin: 16px 0; }
+.module-modal__row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 14px;
+}
+.module-modal__row:last-child { border-bottom: none; }
+.module-modal__row-label { color: #8888a0; }
+.module-modal__row-value {
+  font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  color: #e8e8ef; text-align: right;
+}
+.module-modal__row-value a { color: #00b4d8; text-decoration: none; }
+.module-modal__row-value a:hover { text-decoration: underline; }
+.module-modal__cta {
+  display: block; width: 100%; margin-top: 20px; padding: 14px;
+  background: rgba(0,255,170,0.1); border: 1px solid rgba(0,255,170,0.3);
+  border-radius: 8px; color: #00FFAA; font-size: 14px; font-weight: 600;
+  text-align: center; text-decoration: none; cursor: pointer;
+  font-family: 'Inter', sans-serif; transition: background 0.2s;
+}
+.module-modal__cta:hover { background: rgba(0,255,170,0.18); }
+
+@media (max-width: 768px) {
+  .module-modal__content { padding: 24px 20px; }
+  .module-modal__row { flex-direction: column; gap: 4px; align-items: flex-start; }
+}
 
 /* Token info */
 .token-info-grid {
@@ -270,6 +336,7 @@
       <a href="/explore" class="nav__link">Explore</a>
       <a href="/play" class="nav__link">Play</a>
       <a href="/build" class="nav__link nav__link--active">Build</a>
+      <a href="/reach" class="nav__link">Reach</a>
     </div>
     <div class="nav__spacer"></div>
     <button class="nav__wallet nav__wallet--disconnected" id="navWalletBtn" onclick="onWalletClick()">Connect</button>
@@ -287,6 +354,7 @@
     <a href="/explore" class="nav__mobile-link">Explore</a>
     <a href="/play" class="nav__mobile-link">Play</a>
     <a href="/build" class="nav__mobile-link nav__mobile-link--active">Build</a>
+    <a href="/reach" class="nav__mobile-link">Reach</a>
     <div class="nav__dropdown-divider"></div>
     <button class="nav__wallet nav__wallet--disconnected" id="navWalletBtnMobile" onclick="onWalletClick()" style="margin-top:16px;width:100%">Connect</button>
   </div>
@@ -525,6 +593,14 @@ const tba = await wallet.getWalletAddress(1);</div>
   </div>
 </div>
 
+<!-- ═══ MODULE MODAL ═══ -->
+<div class="module-modal" id="moduleModal" style="display:none" onclick="if(event.target===this)closeModuleModal()">
+  <div class="module-modal__content">
+    <button class="module-modal__close" onclick="closeModuleModal()">&times;</button>
+    <div id="moduleModalBody"></div>
+  </div>
+</div>
+
 <!-- ═══ FOOTER ═══ -->
 <div class="site-footer">
   <div class="footer__links">
@@ -600,19 +676,88 @@ if (window.location.hash) {
   if (t) t.click();
 }
 
+// ── Known module contract addresses ──
+const MODULE_CONTRACTS = {
+  'Storage Vault': '0xD47dB08D328377Cb6dd9FBa2657482472Ab8C48f',
+  'Score Tracker': '0x5c1EE3af8e31Ea2E9FD9FCf39abE356accb05772',
+  'Encrypted Memory': '0x9F38406bc747C7aF4F85d17c0DD44F5d149e56d3',
+};
+const STATUS_LABELS = { 1: 'Pending', 2: 'Approved', 3: 'Rejected', 4: 'Delisted' };
+
+let _loadedModules = [];
+
+function openModuleModal(idx) {
+  const m = _loadedModules[idx];
+  if (!m) return;
+  const price = Number(m.price) === 0 ? 'Free' : ExoCore.formatEth(m.price) + ' ETH';
+  const contractAddr = MODULE_CONTRACTS[m.name] || null;
+  const statusLabel = STATUS_LABELS[m.status] || 'Unknown';
+  const statusClass = m.status === 2 ? 'approved' : 'active';
+  const fmtDate = ts => ts ? new Date(ts * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '--';
+
+  document.getElementById('moduleModalBody').innerHTML = `
+    <div class="module-modal__name">${ExoCore.escHtml(m.name)}</div>
+    <div class="module-modal__desc">${ExoCore.escHtml(m.description)}</div>
+    <span class="module-modal__badge module-modal__badge--${statusClass}">${statusLabel}</span>
+    <div class="module-modal__rows">
+      <div class="module-modal__row">
+        <span class="module-modal__row-label">Builder</span>
+        <span class="module-modal__row-value"><a href="https://basescan.org/address/${m.builder}" target="_blank">${ExoCore.truncAddr(m.builder)}</a></span>
+      </div>
+      ${contractAddr ? `<div class="module-modal__row">
+        <span class="module-modal__row-label">Contract</span>
+        <span class="module-modal__row-value"><a href="https://basescan.org/address/${contractAddr}" target="_blank">${ExoCore.truncAddr(contractAddr)}</a></span>
+      </div>` : ''}
+      <div class="module-modal__row">
+        <span class="module-modal__row-label">Price</span>
+        <span class="module-modal__row-value" style="color:#00FFAA">${price}</span>
+      </div>
+      <div class="module-modal__row">
+        <span class="module-modal__row-label">Version</span>
+        <span class="module-modal__row-value">${ExoCore.escHtml(m.version)}</span>
+      </div>
+      <div class="module-modal__row">
+        <span class="module-modal__row-label">Activations</span>
+        <span class="module-modal__row-value" style="color:#f0a030">${m.activations}</span>
+      </div>
+      <div class="module-modal__row">
+        <span class="module-modal__row-label">Submitted</span>
+        <span class="module-modal__row-value">${fmtDate(m.submittedAt)}</span>
+      </div>
+      <div class="module-modal__row">
+        <span class="module-modal__row-label">Approved</span>
+        <span class="module-modal__row-value">${fmtDate(m.approvedAt)}</span>
+      </div>
+    </div>
+    <a href="/marketplace" class="module-modal__cta">Activate on Your Exo</a>`;
+
+  const modal = document.getElementById('moduleModal');
+  modal.style.display = 'flex';
+  requestAnimationFrame(() => modal.classList.add('module-modal--visible'));
+}
+
+function closeModuleModal() {
+  const modal = document.getElementById('moduleModal');
+  modal.classList.remove('module-modal--visible');
+  setTimeout(() => { modal.style.display = 'none'; }, 200);
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModuleModal(); });
+
 // ── Load Modules ──
 ExoCore.onReady(async () => {
   ExoCore.autoConnect();
   try {
     const modules = await ExoCore.loadAllMarketplaceModules();
-    const approved = modules.filter(m => m.status > 0); // Active modules (1=Approved, 2=Active, etc)
+    // Only show APPROVED modules (status 2) — filters out game placeholders (delisted/4), pending (1), rejected (3)
+    const approved = modules.filter(m => m.status === 2);
+    _loadedModules = approved;
     if (approved.length === 0) {
       document.getElementById('moduleGrid').innerHTML = '<div class="loading-text" style="grid-column:1/-1">No modules available yet</div>';
       return;
     }
-    document.getElementById('moduleGrid').innerHTML = approved.map(m => {
+    document.getElementById('moduleGrid').innerHTML = approved.map((m, i) => {
       const price = Number(m.price) === 0 ? 'Free' : ExoCore.formatEth(m.price) + ' ETH';
-      return `<div class="module-card">
+      return `<div class="module-card" onclick="openModuleModal(${i})">
         <div class="module-card__name">${ExoCore.escHtml(m.name)}</div>
         <div class="module-card__desc">${ExoCore.escHtml(m.description)}</div>
         <div class="module-card__meta">
