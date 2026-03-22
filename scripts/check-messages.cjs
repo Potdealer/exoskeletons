@@ -18,7 +18,7 @@
  */
 
 try { require("dotenv").config(); } catch {}
-const ethers = require("/mnt/e/Ai Agent/Projects/exoskeletons/node_modules/ethers/lib.commonjs/ethers.js");
+const ethers = require("ethers");
 const fs = require("fs");
 const path = require("path");
 const https = require("https");
@@ -27,7 +27,7 @@ const EXO_CORE = "0x8241BDD5009ed3F6C99737D2415994B58296Da0d";
 const RPC_URL = process.env.BASE_RPC_URL || "https://mainnet.base.org";
 const STATE_FILE = path.join(__dirname, "..", "data", "message-check-state.json");
 
-const TELEGRAM_BOT_TOKEN = "8423436009:AAGdlkzGCa8RmDLPap-c6OyaymWAxNezuNQ";
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = "6180484783";
 
 const CORE_ABI = [

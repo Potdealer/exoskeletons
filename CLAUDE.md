@@ -44,11 +44,11 @@ Inspired by OK Computers (functional depth) + mfers (open ethos).
 ## Deployment Wallet
 
 - **Address**: `0x2460F6C6CA04DD6a73E9B5535aC67Ac48726c09b`
-- **Private key**: In `/mnt/e/Ai Agent/Projects/exoskeletons/.env`
+- **Private key**: In `./.env`
 - **Role**: Owner of all Exoskeleton contracts — can whitelist, pause, set renderer, approve modules, etc.
 - **How to use**:
   ```bash
-  cd "/mnt/e/Ai Agent/Projects/exoskeletons" && source .env && \
+  cd "." && source .env && \
   ~/.foundry/bin/cast send <contract> "<function>" --private-key $PRIVATE_KEY --rpc-url https://mainnet.base.org
   ```
 
@@ -136,7 +136,7 @@ Each Exoskeleton's appearance is encoded in 9 bytes of configuration data:
 
 **Single address**:
 ```bash
-cd "/mnt/e/Ai Agent/Projects/exoskeletons" && source .env && \
+cd "." && source .env && \
 ~/.foundry/bin/cast send 0x8241BDD5009ed3F6C99737D2415994B58296Da0d \
   "setWhitelist(address,bool)" <ADDRESS> true \
   --private-key $PRIVATE_KEY --rpc-url https://mainnet.base.org
@@ -167,7 +167,7 @@ cd "/mnt/e/Ai Agent/Projects/exoskeletons" && source .env && \
 ## File Structure
 
 ```
-/mnt/e/Ai Agent/Projects/exoskeletons/
+./
 ├── contracts/
 │   ├── ExoskeletonCore.sol          (705 lines, main ERC-721)
 │   ├── ExoskeletonRenderer.sol      (SVG art generator)
@@ -376,7 +376,7 @@ enum ModuleStatus {
 
 ### Test Suite
 
-**Location**: `/mnt/e/Ai Agent/Projects/exoskeletons/test/ModuleMarketplace.test.js`
+**Location**: `./test/ModuleMarketplace.test.js`
 
 **88 tests, ALL PASSING**:
 - Deployment & initialization
@@ -651,11 +651,12 @@ The Bankr `/agent/submit` endpoint expects `{ transaction: { to, data, value, ch
 
 ## Environment & Secrets
 
-**File**: `/mnt/e/Ai Agent/Projects/exoskeletons/.env`
+**File**: `.env` (gitignored)
 
 ```
 PRIVATE_KEY=<deployment_wallet_private_key>
-BASESCAN_API_KEY=686Q2BM66AJP9ZK2C3N1Z8RSJMC2V6HG5Y
+BASESCAN_API_KEY=<in .env>
+TELEGRAM_BOT_TOKEN=<in .env>
 RPC_URL=https://mainnet.base.org
 ```
 
@@ -665,7 +666,7 @@ RPC_URL=https://mainnet.base.org
 
 ## Basescan Verification
 
-**API Key**: `686Q2BM66AJP9ZK2C3N1Z8RSJMC2V6HG5Y`
+**API Key**: stored in `.env` as `BASESCAN_API_KEY`
 
 All 5 contracts verified on Basescan (Feb 17 2026):
 - ExoskeletonCore: https://basescan.org/address/0x8241BDD5009ed3F6C99737D2415994B58296Da0d

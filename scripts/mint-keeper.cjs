@@ -31,7 +31,7 @@ const EXO_CORE = "0x8241BDD5009ed3F6C99737D2415994B58296Da0d";
 const VENDING_MACHINE = "0xc6579259b45948b37D4D33A6D1407c206A2CCe80";
 const WSS_URL = "wss://base-rpc.publicnode.com";
 const HTTP_URL = "https://base-rpc.publicnode.com";
-const TELEGRAM_BOT = "8423436009:AAGdlkzGCa8RmDLPap-c6OyaymWAxNezuNQ";
+const TELEGRAM_BOT = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT = "6180484783";
 
 const CORE_ABI = [
