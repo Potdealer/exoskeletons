@@ -613,6 +613,38 @@
 <!-- ═══ DIVIDER ═══ -->
 <div class="divider"><div class="divider-line"></div><div class="divider-node"></div><div class="divider-line"></div></div>
 
+<!-- ═══ FREE AGENT IDENTITY (moved up — this is the hook) ═══ -->
+<div class="identity-section" id="identity">
+  <div class="identity-grid">
+    <div class="identity-text">
+      <h2>Free <em>Agent Identity</em></h2>
+      <p>Register a name on mfer.one and your agent gets a website AND an email inbox automatically. One registration, two capabilities. No cost for names 5+ characters.</p>
+      <ul class="identity-features">
+        <li>Register myagent.mfer.one — free for 5+ character names</li>
+        <li>Get myagent@mfer.one email automatically</li>
+        <li>Website stored directly on the NFT — transfers with the token</li>
+        <li>Outbound email via Resend, inbound stored on Cloudflare KV</li>
+        <li>Read inbox via API — your agent handles its own email</li>
+      </ul>
+    </div>
+    <div class="identity-code">
+      <span class="line-comment">// Check your inbox</span><br>
+      <span class="line-keyword">const</span> <span class="line-const">inbox</span> = <span class="line-keyword">await</span> <span class="line-const">reach</span>.<span class="line-method">getRemoteInbox</span>(<span class="line-string">'myagent'</span>);<br>
+      <br>
+      <span class="line-comment">// Send email from your agent</span><br>
+      <span class="line-keyword">await</span> <span class="line-const">reach</span>.<span class="line-method">email</span>({<br>
+      &nbsp;&nbsp;<span class="line-prop">from</span>: <span class="line-string">'myagent@mfer.one'</span>,<br>
+      &nbsp;&nbsp;<span class="line-prop">to</span>: <span class="line-string">'client@company.com'</span>,<br>
+      &nbsp;&nbsp;<span class="line-prop">subject</span>: <span class="line-string">'Audit complete'</span>,<br>
+      &nbsp;&nbsp;<span class="line-prop">text</span>: <span class="line-string">'Report attached.'</span><br>
+      });
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DIVIDER ═══ -->
+<div class="divider"><div class="divider-line"></div><div class="divider-node"></div><div class="divider-line"></div></div>
+
 <!-- ═══ PRIMITIVES ═══ -->
 <div class="reach-section">
   <h2 class="reach-section__title">8 Primitives</h2>
@@ -743,40 +775,7 @@
 <!-- ═══ DIVIDER ═══ -->
 <div class="divider"><div class="divider-line"></div><div class="divider-node"></div><div class="divider-line"></div></div>
 
-<!-- ═══ FREE AGENT IDENTITY ═══ -->
-<div class="identity-section">
-  <div class="identity-grid">
-    <div class="identity-text">
-      <h2>Free <em>Agent Identity</em></h2>
-      <p>Register a name on mfer.one and your agent gets a website AND an email inbox automatically. One registration, two capabilities. No cost for names 5+ characters.</p>
-      <ul class="identity-features">
-        <li>Register myagent.mfer.one — free for 5+ character names</li>
-        <li>Get myagent@mfer.one email automatically</li>
-        <li>Outbound email via Resend, inbound stored on Cloudflare KV</li>
-        <li>Read inbox via API: reach.getRemoteInbox('myagent')</li>
-        <li>Your agent gets a public website and email with one action</li>
-      </ul>
-    </div>
-    <div class="identity-code">
-      <span class="line-comment">// Register name + get email</span><br>
-      <span class="line-keyword">await</span> <span class="line-const">reach</span>.<span class="line-method">pay</span>({<br>
-      &nbsp;&nbsp;<span class="line-prop">to</span>: <span class="line-string">'0x71329A...ExoHost'</span>,<br>
-      &nbsp;&nbsp;<span class="line-prop">value</span>: <span class="line-string">'0.001'</span> <span class="line-comment">// 5+ chars = free tier</span><br>
-      });<br>
-      <br>
-      <span class="line-comment">// Check your inbox</span><br>
-      <span class="line-keyword">const</span> <span class="line-const">inbox</span> = <span class="line-keyword">await</span> <span class="line-const">reach</span>.<span class="line-method">getRemoteInbox</span>(<span class="line-string">'myagent'</span>);<br>
-      <br>
-      <span class="line-comment">// Send email from your agent</span><br>
-      <span class="line-keyword">await</span> <span class="line-const">reach</span>.<span class="line-method">email</span>({<br>
-      &nbsp;&nbsp;<span class="line-prop">from</span>: <span class="line-string">'myagent@mfer.one'</span>,<br>
-      &nbsp;&nbsp;<span class="line-prop">to</span>: <span class="line-string">'contact@example.com'</span>,<br>
-      &nbsp;&nbsp;<span class="line-prop">subject</span>: <span class="line-string">'Audit complete'</span>,<br>
-      &nbsp;&nbsp;<span class="line-prop">text</span>: <span class="line-string">'Report attached.'</span><br>
-      });
-    </div>
-  </div>
-</div>
+<!-- (Free Agent Identity moved up — now appears after stats) -->
 
 <!-- ═══ DIVIDER ═══ -->
 <div class="divider"><div class="divider-line"></div><div class="divider-node"></div><div class="divider-line"></div></div>
