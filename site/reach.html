@@ -365,11 +365,149 @@
 .footer__built .f-gold { color: #f0a030; }
 .footer__built .f-cyan { color: #00b4d8; }
 
+/* ── Beyond Primitives grid ── */
+.intel-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.intel-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 24px 20px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.intel-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: 0 0 20px rgba(0,180,216,0.08);
+}
+.intel-card__name {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--green);
+  margin-bottom: 8px;
+}
+.intel-card__desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ── Identity section ── */
+.identity-section {
+  position: relative;
+  z-index: 10;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 48px 40px;
+}
+.identity-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: center;
+}
+.identity-text h2 {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+}
+.identity-text h2 em {
+  font-style: normal;
+  color: var(--green);
+}
+.identity-text p {
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+.identity-features {
+  list-style: none;
+  padding: 0;
+}
+.identity-features li {
+  font-size: 14px;
+  color: var(--text-secondary);
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.identity-features li::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--green);
+  border-radius: 1px;
+  margin-right: 10px;
+  transform: rotate(45deg);
+  vertical-align: middle;
+}
+.identity-code {
+  background: #0d0d14;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 2;
+  overflow-x: auto;
+}
+
+/* ── Proven section ── */
+.proven-section {
+  position: relative;
+  z-index: 10;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 48px 40px;
+}
+.proven-quote {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--cyan);
+  border-radius: var(--radius-md);
+  padding: 28px 32px;
+  margin-bottom: 24px;
+}
+.proven-quote__text {
+  font-size: 16px;
+  color: var(--text-primary);
+  line-height: 1.7;
+  font-style: italic;
+}
+.proven-badges {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.proven-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.proven-badge__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.proven-badge__dot--green { background: var(--green); }
+.proven-badge__dot--cyan { background: var(--cyan); }
+.proven-badge__dot--amber { background: var(--amber); }
+
 /* ── Responsive ── */
 @media (max-width: 900px) {
   .prim-grid { grid-template-columns: repeat(2, 1fr); }
+  .intel-grid { grid-template-columns: repeat(2, 1fr); }
   .skills-grid { grid-template-columns: repeat(3, 1fr); }
   .exo-int__grid { grid-template-columns: 1fr; }
+  .identity-grid { grid-template-columns: 1fr; }
   .how-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 600px) {
@@ -379,9 +517,12 @@
   .reach-stats { gap: 24px; flex-wrap: wrap; padding: 24px 20px; }
   .reach-stat__value { font-size: 22px; }
   .prim-grid { grid-template-columns: 1fr; }
+  .intel-grid { grid-template-columns: 1fr; }
   .skills-grid { grid-template-columns: repeat(2, 1fr); }
   .reach-section { padding: 32px 20px; }
   .exo-integration { padding: 32px 20px; }
+  .identity-section { padding: 32px 20px; }
+  .proven-section { padding: 32px 20px; }
   .reach-demo { padding: 0 20px; }
   .reach-demo__block { padding: 20px; font-size: 12px; }
   .site-footer { padding: 32px 20px; }
@@ -464,8 +605,8 @@
     <div class="reach-stat__label">Primitives</div>
   </div>
   <div class="reach-stat">
-    <div class="reach-stat__value reach-stat__value--amber">2+</div>
-    <div class="reach-stat__label">Site Skills + Template</div>
+    <div class="reach-stat__value reach-stat__value--amber">13</div>
+    <div class="reach-stat__label">Built-in Features</div>
   </div>
 </div>
 
@@ -500,7 +641,7 @@
     <div class="prim-card">
       <span class="prim-card__icon">&#x1F441;</span>
       <div class="prim-card__name">observe</div>
-      <div class="prim-card__desc">Watch for changes. Poll URLs, listen to WebSockets, monitor DOM mutations. Callback on change.</div>
+      <div class="prim-card__desc">Watch for changes. Poll URLs, listen on WebSockets, monitor smart contract events, receive webhooks. Fires callbacks when conditions are met.</div>
     </div>
     <div class="prim-card">
       <span class="prim-card__icon">&#x1F4BE;</span>
@@ -510,12 +651,43 @@
     <div class="prim-card">
       <span class="prim-card__icon">&#x1F4B3;</span>
       <div class="prim-card__name">pay</div>
-      <div class="prim-card__desc">Send ETH or ERC-20 tokens. Native Base support, gas estimation, receipt tracking.</div>
+      <div class="prim-card__desc">Send ETH, ERC-20 tokens, or x402 micropayments. Native Base support, gas estimation, receipt tracking.</div>
     </div>
     <div class="prim-card">
       <span class="prim-card__icon">&#x2709;&#xFE0F;</span>
       <div class="prim-card__name">email</div>
-      <div class="prim-card__desc">Send transactional email via Resend. HTML or plain text, attachments, delivery tracking.</div>
+      <div class="prim-card__desc">Send AND receive email. Outbound via Resend. Inbound via mfer.one — agents get their own autonomous inbox. Read, reply, and manage email via API.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DIVIDER ═══ -->
+<div class="divider"><div class="divider-line"></div><div class="divider-node"></div><div class="divider-line"></div></div>
+
+<!-- ═══ BUILT-IN INTELLIGENCE ═══ -->
+<div class="reach-section">
+  <h2 class="reach-section__title">Built-in Intelligence</h2>
+  <p class="reach-section__sub">Beyond primitives. Reach handles the hard parts automatically so your agent can focus on the task.</p>
+  <div class="intel-grid">
+    <div class="intel-card">
+      <div class="intel-card__name">CAPTCHA Solving</div>
+      <div class="intel-card__desc">Auto-detects Turnstile, reCAPTCHA, and hCaptcha. Solves via CapSolver API. Your agent never gets stuck on a challenge page.</div>
+    </div>
+    <div class="intel-card">
+      <div class="intel-card__name">Session Recording</div>
+      <div class="intel-card__desc">Records every action with timestamps. Replay via CLI. Sensitive data auto-redacted. Debug what your agent did and why.</div>
+    </div>
+    <div class="intel-card">
+      <div class="intel-card__name">Form Memory</div>
+      <div class="intel-card__desc">Remembers form fields across visits. Auto-fills on repeat submissions. Skips passwords. Turns multi-step forms into one-shot actions.</div>
+    </div>
+    <div class="intel-card">
+      <div class="intel-card__name">Error Recovery</div>
+      <div class="intel-card__desc">Each action tries 5 strategies before failing. Selector, text, role, aria-label, coordinates. Resilient to UI changes.</div>
+    </div>
+    <div class="intel-card">
+      <div class="intel-card__name">Webhook Server</div>
+      <div class="intel-card__desc">Receive incoming webhooks on port 8430. Pairs with observe for event-driven workflows. Your agent reacts to the outside world.</div>
     </div>
   </div>
 </div>
@@ -571,6 +743,44 @@
 <!-- ═══ DIVIDER ═══ -->
 <div class="divider"><div class="divider-line"></div><div class="divider-node"></div><div class="divider-line"></div></div>
 
+<!-- ═══ FREE AGENT IDENTITY ═══ -->
+<div class="identity-section">
+  <div class="identity-grid">
+    <div class="identity-text">
+      <h2>Free <em>Agent Identity</em></h2>
+      <p>Register a name on mfer.one and your agent gets a website AND an email inbox automatically. One registration, two capabilities. No cost for names 5+ characters.</p>
+      <ul class="identity-features">
+        <li>Register myagent.mfer.one — free for 5+ character names</li>
+        <li>Get myagent@mfer.one email automatically</li>
+        <li>Outbound email via Resend, inbound stored on Cloudflare KV</li>
+        <li>Read inbox via API: reach.getRemoteInbox('myagent')</li>
+        <li>Your agent gets a public website and email with one action</li>
+      </ul>
+    </div>
+    <div class="identity-code">
+      <span class="line-comment">// Register name + get email</span><br>
+      <span class="line-keyword">await</span> <span class="line-const">reach</span>.<span class="line-method">pay</span>({<br>
+      &nbsp;&nbsp;<span class="line-prop">to</span>: <span class="line-string">'0x71329A...ExoHost'</span>,<br>
+      &nbsp;&nbsp;<span class="line-prop">value</span>: <span class="line-string">'0.001'</span> <span class="line-comment">// 5+ chars = free tier</span><br>
+      });<br>
+      <br>
+      <span class="line-comment">// Check your inbox</span><br>
+      <span class="line-keyword">const</span> <span class="line-const">inbox</span> = <span class="line-keyword">await</span> <span class="line-const">reach</span>.<span class="line-method">getRemoteInbox</span>(<span class="line-string">'myagent'</span>);<br>
+      <br>
+      <span class="line-comment">// Send email from your agent</span><br>
+      <span class="line-keyword">await</span> <span class="line-const">reach</span>.<span class="line-method">email</span>({<br>
+      &nbsp;&nbsp;<span class="line-prop">from</span>: <span class="line-string">'myagent@mfer.one'</span>,<br>
+      &nbsp;&nbsp;<span class="line-prop">to</span>: <span class="line-string">'contact@example.com'</span>,<br>
+      &nbsp;&nbsp;<span class="line-prop">subject</span>: <span class="line-string">'Audit complete'</span>,<br>
+      &nbsp;&nbsp;<span class="line-prop">text</span>: <span class="line-string">'Report attached.'</span><br>
+      });
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DIVIDER ═══ -->
+<div class="divider"><div class="divider-line"></div><div class="divider-node"></div><div class="divider-line"></div></div>
+
 <!-- ═══ EXO INTEGRATION ═══ -->
 <div class="exo-integration">
   <div class="exo-int__grid">
@@ -596,6 +806,31 @@
       console.<span class="line-method">log</span>(<span class="line-const">identity</span>.<span class="line-prop">name</span>); &nbsp;<span class="line-comment">// "Exo #1"</span><br>
       console.<span class="line-method">log</span>(<span class="line-const">identity</span>.<span class="line-prop">reputation</span>); <span class="line-comment">// 1020</span><br>
       console.<span class="line-method">log</span>(<span class="line-const">identity</span>.<span class="line-prop">trustTier</span>); <span class="line-comment">// "proven"</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DIVIDER ═══ -->
+<div class="divider"><div class="divider-line"></div><div class="divider-node"></div><div class="divider-line"></div></div>
+
+<!-- ═══ PROVEN IN PRODUCTION ═══ -->
+<div class="proven-section">
+  <h2 class="reach-section__title">Proven in Production</h2>
+  <div class="proven-quote">
+    <div class="proven-quote__text">Ollie used Reach to autonomously submit 7 security audit findings to Cantina — logged in, navigated forms, filled descriptions, clicked submit. Zero human involvement.</div>
+  </div>
+  <div class="proven-badges">
+    <div class="proven-badge">
+      <span class="proven-badge__dot proven-badge__dot--green"></span>
+      133 tests passing
+    </div>
+    <div class="proven-badge">
+      <span class="proven-badge__dot proven-badge__dot--cyan"></span>
+      Open source, MIT license
+    </div>
+    <div class="proven-badge">
+      <span class="proven-badge__dot proven-badge__dot--amber"></span>
+      npm install reach-agent
     </div>
   </div>
 </div>
